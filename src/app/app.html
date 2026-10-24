@@ -1,73 +1,69 @@
 @if (showSplash()) {
   <app-splash-screen (finished)="onSplashFinished()"></app-splash-screen>
 } @else {
-  <div class="app-container">
-    <main class="app-ready-view">
-      <div class="glass-hero-card">
-        <div class="app-icon-badge">
-          <img src="app-icon.png" alt="apdock" width="56" height="56" />
-        </div>
-        <div class="hero-content">
-          <span class="status-tag">SPLASH ACTIVE</span>
-          <h2 class="hero-title">Welcome to apdock</h2>
-          <p class="hero-desc">
-            Your cute minimal splash screen is now fully responsive in both <strong>Light</strong> and <strong>Dark</strong> modes.
-          </p>
-        </div>
-
-        <!-- Mode Switcher -->
-        <div class="theme-switcher" role="group" aria-label="Select color theme">
-          <button
-            type="button"
-            class="theme-pill"
-            [class.active]="currentTheme() === 'light'"
-            (click)="setTheme('light')"
-            aria-label="Light mode"
-          >
-            ☀️ Light
-          </button>
-          <button
-            type="button"
-            class="theme-pill"
-            [class.active]="currentTheme() === 'dark'"
-            (click)="setTheme('dark')"
-            aria-label="Dark mode"
-          >
-            🌙 Dark
-          </button>
-          <button
-            type="button"
-            class="theme-pill"
-            [class.active]="currentTheme() === 'system'"
-            (click)="setTheme('system')"
-            aria-label="System mode"
-          >
-            ⚙️ Auto
-          </button>
-        </div>
-
-        <button type="button" class="action-btn" (click)="triggerSplash()">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-            <path d="M16 16h5v5" />
-          </svg>
-          <span>Preview Splash Screen</span>
+  <div class="app-shell">
+    <!-- Floating Utility Controls (Theme switcher & Splash preview) -->
+    <aside class="floating-controls" aria-label="Quick controls">
+      <div class="theme-switcher-compact" role="group" aria-label="Theme selector">
+        <button
+          type="button"
+          class="compact-pill"
+          [class.active]="currentTheme() === 'light'"
+          (click)="setTheme('light')"
+          title="Light Mode"
+          aria-label="Light mode"
+        >
+          ☀️
+        </button>
+        <button
+          type="button"
+          class="compact-pill"
+          [class.active]="currentTheme() === 'dark'"
+          (click)="setTheme('dark')"
+          title="Dark Mode"
+          aria-label="Dark mode"
+        >
+          🌙
+        </button>
+        <button
+          type="button"
+          class="compact-pill"
+          [class.active]="currentTheme() === 'system'"
+          (click)="setTheme('system')"
+          title="System Default"
+          aria-label="System mode"
+        >
+          ⚙️
         </button>
       </div>
 
-      <router-outlet />
-    </main>
+      <button
+        type="button"
+        class="splash-replay-btn"
+        (click)="triggerSplash()"
+        title="Replay Splash Screen"
+        aria-label="Replay splash screen"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+          <path d="M16 16h5v5" />
+        </svg>
+      </button>
+    </aside>
+
+    <!-- Main Navigation View (Auth Page: Sign In & Sign Up) -->
+    <router-outlet />
   </div>
 }
