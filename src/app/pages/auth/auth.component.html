@@ -8,7 +8,7 @@
   </div>
 
   <div class="auth-container">
-    <!-- Brand Header -->
+    <!-- Brand Header (Above Bottom Card) -->
     <header class="auth-header">
       <div class="brand-icon-wrapper">
         <img src="app-icon.png" alt="apdock" width="68" height="68" class="brand-icon" />
@@ -26,10 +26,18 @@
     </header>
 
     @if (!auth.isAuthenticated()) {
-      <!-- Main Auth Card -->
-      <div class="auth-card">
-        <!-- Segmented Mode Switcher -->
+      <!-- Main Auth Bottom-Sheet Card -->
+      <div class="auth-card" [class.mode-signup]="mode() === 'signup'">
+        <!-- iOS Bottom Sheet Pull Indicator -->
+        <div class="sheet-handle" aria-hidden="true"></div>
+
+        <!-- Segmented Mode Switcher (Sliding Pill Indicator) -->
         <div class="mode-tabs" role="tablist" aria-label="Authentication modes">
+          <div
+            class="tab-indicator-pill"
+            [class.pill-right]="mode() === 'signup'"
+            aria-hidden="true"
+          ></div>
           <button
             type="button"
             class="tab-btn"
@@ -52,64 +60,76 @@
           </button>
         </div>
 
-        <!-- Error Feedback Banner -->
-        @if (validationError() || auth.authError()) {
-          <div class="error-banner" role="alert">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="error-icon"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{{ validationError() || auth.authError() }}</span>
+        <!-- Smooth Error Feedback Banner -->
+        <div
+          class="smooth-error-wrapper"
+          [class.has-error]="validationError() || auth.authError()"
+          aria-live="polite"
+        >
+          <div class="smooth-error-inner">
+            <div class="error-banner" role="alert">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="error-icon"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{{ validationError() || auth.authError() }}</span>
+            </div>
           </div>
-        }
+        </div>
 
         <!-- Interactive Form -->
         <form (ngSubmit)="handleSubmit()" class="auth-form" novalidate>
-          <!-- Display Name (Sign Up only) -->
-          @if (mode() === 'signup') {
-            <div class="form-group animate-field">
-              <label for="nameInput" class="form-label">Full Name</label>
-              <div class="input-wrapper">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="field-icon"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <input
-                  id="nameInput"
-                  name="name"
-                  type="text"
-                  class="form-input"
-                  placeholder="e.g. Alex River"
-                  [(ngModel)]="name"
-                  required
-                  autocomplete="name"
-                />
+          <!-- Full Name Field (Smoothly Expands on Sign Up) -->
+          <div
+            class="smooth-expandable"
+            [class.is-expanded]="mode() === 'signup'"
+            aria-hidden="{{ mode() !== 'signup' }}"
+          >
+            <div class="smooth-expandable-inner">
+              <div class="form-group">
+                <label for="nameInput" class="form-label">Full Name</label>
+                <div class="input-wrapper">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="field-icon"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <input
+                    id="nameInput"
+                    name="name"
+                    type="text"
+                    class="form-input"
+                    placeholder="e.g. Alex River"
+                    [(ngModel)]="name"
+                    [tabindex]="mode() === 'signup' ? 0 : -1"
+                    autocomplete="name"
+                  />
+                </div>
               </div>
             </div>
-          }
+          </div>
 
           <!-- Email Input -->
           <div class="form-group">
@@ -179,7 +199,6 @@
                 aria-label="Toggle password visibility"
               >
                 @if (showPassword()) {
-                  <!-- Eye Off -->
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -197,7 +216,6 @@
                     <line x1="2" x2="22" y1="2" y2="22" />
                   </svg>
                 } @else {
-                  <!-- Eye Open -->
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -217,39 +235,45 @@
             </div>
           </div>
 
-          <!-- Confirm Password (Sign Up only) -->
-          @if (mode() === 'signup') {
-            <div class="form-group animate-field">
-              <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
-              <div class="input-wrapper">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="field-icon"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                <input
-                  id="confirmPasswordInput"
-                  name="confirmPassword"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  class="form-input"
-                  placeholder="Re-enter password"
-                  [(ngModel)]="confirmPassword"
-                  required
-                  autocomplete="new-password"
-                />
+          <!-- Confirm Password (Smoothly Expands on Sign Up) -->
+          <div
+            class="smooth-expandable"
+            [class.is-expanded]="mode() === 'signup'"
+            aria-hidden="{{ mode() !== 'signup' }}"
+          >
+            <div class="smooth-expandable-inner">
+              <div class="form-group">
+                <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
+                <div class="input-wrapper">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="field-icon"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  <input
+                    id="confirmPasswordInput"
+                    name="confirmPassword"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    class="form-input"
+                    placeholder="Re-enter password"
+                    [(ngModel)]="confirmPassword"
+                    [tabindex]="mode() === 'signup' ? 0 : -1"
+                    autocomplete="new-password"
+                  />
+                </div>
               </div>
             </div>
-          }
+          </div>
 
           <!-- Submit Button -->
           <button
@@ -262,7 +286,7 @@
               <span class="btn-spinner"></span>
               <span>{{ mode() === 'signup' ? 'Creating account...' : 'Signing in...' }}</span>
             } @else {
-              <span>{{ mode() === 'signup' ? 'Create Free Account' : 'Sign In to apdock' }}</span>
+              <span class="btn-caption">{{ mode() === 'signup' ? 'Create Free Account' : 'Sign In to apdock' }}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -273,6 +297,7 @@
                 stroke-width="2.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                class="btn-arrow"
               >
                 <path d="M5 12h14" />
                 <path d="m12 5 7 7-7 7" />
@@ -295,7 +320,6 @@
           (click)="handleGoogleSignIn()"
           [disabled]="auth.isSubmitting()"
         >
-          <!-- Official Google multi-color G -->
           <svg width="18" height="18" viewBox="0 0 24 24" class="google-icon">
             <path
               fill="#4285F4"
@@ -318,16 +342,24 @@
         </button>
 
         <!-- Backend Sync Notice -->
-        @if (auth.isBackendSyncing()) {
-          <div class="sync-banner animate-fade">
-            <span class="sync-dot"></span>
-            <span>Syncing user profile with apdock Firestore...</span>
+        <div
+          class="smooth-sync-wrapper"
+          [class.is-syncing]="auth.isBackendSyncing()"
+          aria-live="polite"
+        >
+          <div class="smooth-sync-inner">
+            <div class="sync-banner">
+              <span class="sync-dot"></span>
+              <span>Syncing user profile with apdock Firestore...</span>
+            </div>
           </div>
-        }
+        </div>
       </div>
     } @else {
-      <!-- Authenticated Member Profile Card -->
+      <!-- Authenticated Member Profile Bottom Sheet -->
       <div class="auth-card authenticated-card animate-pop">
+        <div class="sheet-handle" aria-hidden="true"></div>
+
         <div class="user-avatar-shell">
           @if (auth.currentUser()?.photoURL) {
             <img [src]="auth.currentUser()?.photoURL" alt="User avatar" class="user-avatar-img" />
@@ -349,7 +381,7 @@
           <span>Firestore Backend Synced • Active</span>
         </div>
 
-        <!-- 4 Quadrants Preview Grid (Family, Flow, Health, Home) -->
+        <!-- 4 Quadrants Preview Grid -->
         <div class="quadrant-dock-preview">
           <div class="preview-tile tile-amber">
             <span class="tile-dot"></span>

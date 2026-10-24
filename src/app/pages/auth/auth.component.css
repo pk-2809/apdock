@@ -1,6 +1,6 @@
 /* ==========================================================================
    apdock • Cute Minimal Sign-in & Sign-up Flow
-   Adaptive Light & Dark Mode
+   Bottom-Anchored Card & Zero Layout-Shift Fluid Transitions
    ========================================================================== */
 
 :host {
@@ -16,16 +16,17 @@
   background-color: var(--bg-deep);
   color: var(--text-primary);
   display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Card aligns & starts from bottom */
   align-items: center;
-  justify-content: center;
-  padding: calc(var(--sat) + 24px) 20px calc(var(--sab) + 28px);
+  padding: calc(var(--sat) + 16px) 0 0;
   overflow-x: hidden;
   box-sizing: border-box;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* --------------------------------------------------------------------------
-   Ambient Pastel Aura Blobs (Logo Signature Colors)
+   Ambient Pastel Aura Blobs
    -------------------------------------------------------------------------- */
 .ambient-glow {
   position: absolute;
@@ -48,7 +49,7 @@
   width: 320px;
   height: 320px;
   background: radial-gradient(circle, var(--brand-sky) 0%, transparent 70%);
-  top: 15%;
+  top: 10%;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -57,7 +58,7 @@
   width: 240px;
   height: 240px;
   background: radial-gradient(circle, var(--quad-amber) 0%, transparent 70%);
-  top: 35%;
+  top: 25%;
   left: 15%;
   animation-duration: 9s;
   animation-delay: -2s;
@@ -67,7 +68,7 @@
   width: 240px;
   height: 240px;
   background: radial-gradient(circle, var(--quad-emerald) 0%, transparent 70%);
-  top: 30%;
+  top: 22%;
   right: 15%;
   animation-duration: 11s;
   animation-delay: -4s;
@@ -77,7 +78,7 @@
   width: 250px;
   height: 250px;
   background: radial-gradient(circle, var(--quad-coral) 0%, transparent 70%);
-  bottom: 18%;
+  bottom: 22%;
   left: 50%;
   transform: translateX(-50%);
   animation-duration: 12s;
@@ -97,30 +98,34 @@
 }
 
 /* --------------------------------------------------------------------------
-   Container & Header
+   Layout Container & Top Brand Space
    -------------------------------------------------------------------------- */
 .auth-container {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 410px;
+  max-width: 440px;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end; /* Ensures bottom card alignment */
   align-items: center;
+  margin-top: auto;
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 22px;
+  padding: 24px 20px 20px;
+  margin-top: auto;
   animation: fadeInDown 0.6s var(--spring-apple) both;
 }
 
 .brand-icon-wrapper {
-  width: 68px;
-  height: 68px;
-  border-radius: 20px;
+  width: 64px;
+  height: 64px;
+  border-radius: 19px;
   overflow: hidden;
-  margin: 0 auto 12px;
+  margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +150,7 @@
 }
 
 .brand-title {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1.1;
@@ -156,47 +161,101 @@
 }
 
 .brand-subtitle {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 5px;
+  margin-top: 4px;
   line-height: 1.4;
   font-weight: 450;
+  transition: opacity 0.25s ease;
 }
 
 /* --------------------------------------------------------------------------
-   Auth Card & Segmented Tabs
+   Auth Bottom-Sheet Card (Starts From Bottom)
    -------------------------------------------------------------------------- */
 .auth-card {
   width: 100%;
-  padding: 24px;
-  border-radius: 28px;
+  padding: 16px 22px calc(var(--sab) + 26px);
+  border-radius: 36px 36px 0 0;
   background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  box-shadow: var(--card-shadow);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  animation: cardEntrance 0.65s var(--spring-pop) both;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  border-top: 1px solid var(--border-card);
+  border-left: 1px solid var(--border-card);
+  border-right: 1px solid var(--border-card);
+  border-bottom: none;
+  box-shadow: 0 -12px 40px -10px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  animation: slideUpSheet 0.55s var(--spring-apple) both;
+  box-sizing: border-box;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
+@media (min-width: 601px) {
+  .auth-card {
+    border-radius: 34px 34px 28px 28px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border-card);
+    padding: 20px 26px 28px;
+    box-shadow: var(--card-shadow);
+  }
+}
+
+/* Sheet Top Pull Indicator Handle */
+.sheet-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 999px;
+  background: var(--text-muted);
+  opacity: 0.35;
+  margin: 0 auto 16px;
+  transition: opacity 0.2s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Sliding Segmented Mode Switcher (Zero Jump)
+   -------------------------------------------------------------------------- */
 .mode-tabs {
+  position: relative;
   display: flex;
   background: var(--btn-bg);
   border: 1px solid var(--btn-border);
-  padding: 4px;
+  padding: 3px;
   border-radius: 999px;
-  margin-bottom: 20px;
-  position: relative;
+  margin-bottom: 18px;
+}
+
+.tab-indicator-pill {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  bottom: 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tab-indicator-pill.pill-right {
+  transform: translateX(100%);
 }
 
 .tab-btn {
+  position: relative;
+  z-index: 2;
   flex: 1;
   padding: 8px 12px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  transition: all 0.22s var(--spring-apple);
+  background: transparent;
+  border: none;
+  transition: color 0.25s ease;
   text-align: center;
   cursor: pointer;
 }
@@ -206,12 +265,65 @@
 }
 
 .tab-btn.active {
-  background: var(--bg-surface);
   color: var(--text-primary);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-/* Error Banner */
+/* --------------------------------------------------------------------------
+   Zero-Shift Fluid Accordion Form Fields
+   -------------------------------------------------------------------------- */
+.smooth-expandable {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-8px);
+  margin-bottom: 0;
+  transition:
+    grid-template-rows 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.26s ease,
+    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    margin-bottom 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+
+.smooth-expandable.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 15px;
+}
+
+.smooth-expandable-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Smooth Error Banner */
+.smooth-error-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-6px);
+  margin-bottom: 0;
+  transition:
+    grid-template-rows 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.25s ease,
+    transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+    margin-bottom 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+
+.smooth-error-wrapper.has-error {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 16px;
+}
+
+.smooth-error-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .error-banner {
   display: flex;
   align-items: center;
@@ -224,39 +336,29 @@
   font-size: 12.5px;
   font-weight: 500;
   line-height: 1.35;
-  margin-bottom: 18px;
-  animation: shake 0.35s ease both;
 }
 
 .error-icon {
   flex-shrink: 0;
 }
 
-@keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-
 /* --------------------------------------------------------------------------
-   Form Fields & Inputs
+   Form Groups & Inputs
    -------------------------------------------------------------------------- */
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.smooth-expandable .form-group {
+  margin-bottom: 0;
 }
 
 .form-label {
@@ -290,7 +392,7 @@
   font-family: inherit;
   font-size: 14px;
   outline: none;
-  transition: all 0.2s var(--spring-apple);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -330,7 +432,7 @@
 
 /* Submit Action Button */
 .submit-btn {
-  margin-top: 6px;
+  margin-top: 4px;
   width: 100%;
   padding: 13px 20px;
   border-radius: 999px;
@@ -382,7 +484,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 18px 0 16px;
+  margin: 16px 0 14px;
 }
 
 .divider-line {
@@ -431,9 +533,31 @@
   cursor: not-allowed;
 }
 
-/* Sync Notice Banner */
+/* Smooth Sync Notice */
+.smooth-sync-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease,
+    margin-top 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+
+.smooth-sync-wrapper.is-syncing {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 14px;
+}
+
+.smooth-sync-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .sync-banner {
-  margin-top: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,22 +591,21 @@
 }
 
 /* --------------------------------------------------------------------------
-   Authenticated Member Card
+   Authenticated Member Bottom Sheet
    -------------------------------------------------------------------------- */
 .authenticated-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 30px 24px;
 }
 
 .user-avatar-shell {
-  width: 76px;
-  height: 76px;
-  border-radius: 26px;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   background: linear-gradient(135deg, var(--brand-sky), var(--quad-violet));
   padding: 2.5px;
   box-shadow: 0 10px 25px -5px rgba(0, 132, 255, 0.4);
@@ -491,17 +614,17 @@
 .user-avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 24px;
+  border-radius: 22px;
   object-fit: cover;
 }
 
 .user-avatar-initials {
   width: 100%;
   height: 100%;
-  border-radius: 24px;
+  border-radius: 22px;
   background: var(--bg-surface);
   color: var(--brand-sky);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -509,7 +632,7 @@
 }
 
 .member-name {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -519,7 +642,7 @@
 .member-email {
   font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .cloud-sync-badge {
@@ -533,7 +656,7 @@
   color: var(--quad-emerald);
   font-size: 11.5px;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .beacon-dot {
@@ -544,18 +667,17 @@
   box-shadow: 0 0 8px var(--quad-emerald);
 }
 
-/* 4 Quadrants Dock Grid */
 .quadrant-dock-preview {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .preview-tile {
-  padding: 14px 12px;
-  border-radius: 18px;
+  padding: 12px 10px;
+  border-radius: 16px;
   background: var(--bg-surface);
   border: 1px solid var(--border-card);
   display: flex;
@@ -563,7 +685,7 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .tile-dot {
@@ -613,7 +735,9 @@
   background: rgba(255, 69, 58, 0.08);
 }
 
-/* Animations */
+/* --------------------------------------------------------------------------
+   Keyframe Animations
+   -------------------------------------------------------------------------- */
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -625,47 +749,13 @@
   }
 }
 
-@keyframes cardEntrance {
+@keyframes slideUpSheet {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.animate-field {
-  animation: fieldSlide 0.28s var(--spring-apple) both;
-}
-
-@keyframes fieldSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(32px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-.animate-pop {
-  animation: cardEntrance 0.5s var(--spring-pop) both;
-}
-
-.animate-fade {
-  animation: fieldSlide 0.3s ease both;
-}
-
-@media (max-width: 480px) {
-  .auth-card {
-    padding: 20px 18px;
-    border-radius: 24px;
-  }
-
-  .brand-title {
-    font-size: 28px;
   }
 }
