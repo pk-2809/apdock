@@ -1,1 +1,37 @@
-<router-outlet />
+<div class="mobile-viewport-canvas">
+
+  <!-- Ambient Luxury Mesh Glow Orbs -->
+  <div class="mesh-glow-orb orb-sky" aria-hidden="true"></div>
+  <div class="mesh-glow-orb orb-amber" aria-hidden="true"></div>
+  <div class="mesh-glow-orb orb-emerald" aria-hidden="true"></div>
+  <div class="mesh-glow-orb orb-violet" aria-hidden="true"></div>
+
+  <!-- iOS Phone Shell Wrapper (Edge-to-edge on mobile, Centered iPhone on desktop) -->
+  <div class="iphone-shell-container">
+    
+    <!-- Top System Bar -->
+    <app-ios-status-bar></app-ios-status-bar>
+
+    <!-- Apple Dynamic Island Notch Component -->
+    <app-dynamic-island></app-dynamic-island>
+
+    <!-- Scrollable Screen Content Area -->
+    <div class="mobile-scroll-container">
+      <!-- App Brand Header -->
+      <app-header></app-header>
+
+      <!-- Quadrant Category Segmented Slider -->
+      <app-segmented-filter></app-segmented-filter>
+
+      <!-- Interactive 4-Quadrant Home Grid -->
+      <app-quadrant-grid></app-quadrant-grid>
+    </div>
+
+    <!-- Floating Liquid Retina Glass Dock -->
+    <app-ios-dock></app-ios-dock>
+
+    <!-- Native iOS Bottom Sheet Modal -->
+    <app-ios-bottom-sheet></app-ios-bottom-sheet>
+
+  </div>
+</div>

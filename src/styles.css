@@ -1,1 +1,189 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   apdock • Apple iOS Mobile Native Design System
+   Matches Brand Palette: Sky Blue, Amber Family, Emerald Flow, Indigo Health, Coral Home
+   ========================================================================== */
+
+:root {
+  /* Safe Area Insets for iOS Notch & Dynamic Island */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* Brand Theme Colors Extracted Directly from app-icon.png */
+  --brand-sky: #0084ff;
+  --brand-cyan: #00c6ff;
+  --grad-roof: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+
+  /* Quadrant 1: Family & Community */
+  --quad-family: #ff9f0a;
+  --quad-family-end: #ffb703;
+  --grad-family: linear-gradient(135deg, #ff9f0a 0%, #ffb703 100%);
+  --glow-family: rgba(255, 159, 10, 0.35);
+
+  /* Quadrant 2: Schedule & Daily Flow */
+  --quad-flow: #30d158;
+  --quad-flow-end: #05d6a4;
+  --grad-flow: linear-gradient(135deg, #30d158 0%, #05d6a4 100%);
+  --glow-flow: rgba(48, 209, 88, 0.35);
+
+  /* Quadrant 3: Health & Fitness */
+  --quad-health: #5e5ce6;
+  --quad-health-end: #7702ff;
+  --grad-health: linear-gradient(135deg, #5e5ce6 0%, #7702ff 100%);
+  --glow-health: rgba(94, 92, 230, 0.35);
+
+  /* Quadrant 4: Home & Space */
+  --quad-home: #ff3b30;
+  --quad-home-end: #ff5e62;
+  --grad-home: linear-gradient(135deg, #ff3b30 0%, #ff5e62 100%);
+  --glow-home: rgba(255, 59, 48, 0.35);
+
+  /* iOS System Materials & OLED Dark Palette */
+  --bg-oled: #06080f;
+  --bg-surface: #0e1220;
+  --bg-surface-elevated: #161c30;
+  --bg-glass-heavy: rgba(14, 18, 32, 0.78);
+  --bg-glass-card: rgba(22, 28, 48, 0.65);
+  --bg-glass-island: rgba(10, 12, 20, 0.92);
+
+  /* Specular Hairlines & Double-Bezel Borders */
+  --border-specular: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --inner-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  --inner-highlight-glow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+  /* Text & Labels */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+  --text-quaternary: rgba(255, 255, 255, 0.25);
+
+  /* Apple Spring & Motion Physics */
+  --spring-bounce: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --spring-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Typography */
+  --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Base Reset & Mobile Touch Constraints */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #030407;
+  color: var(--text-primary);
+  font-family: var(--font-system);
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+/* Hardware accelerated buttons */
+button {
+  background: none;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+}
+
+/* Touch active micro-compression */
+.pressable {
+  transition: transform 0.16s var(--spring-bounce), opacity 0.16s ease;
+  will-change: transform;
+}
+.pressable:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* Doppelrand / Double-Bezel Card Utility */
+.double-bezel {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-specular);
+  border-radius: 26px;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5), var(--inner-highlight);
+  overflow: hidden;
+}
+
+.double-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.02) 60%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Glassmorphism Frosted Backdrop */
+.glass-material {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--border-specular);
+}
+
+/* Subtle Animated Mesh Glow */
+@keyframes ambientGlowPulse {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translate(15px, -10px) scale(1.12);
+    opacity: 0.42;
+  }
+}
+
+.mesh-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(65px);
+  pointer-events: none;
+  animation: ambientGlowPulse 9s ease-in-out infinite;
+}

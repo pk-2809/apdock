@@ -1,13 +1,37 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Apdock</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body>
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>apdock • Mobile Native Experience</title>
+    <base href="/" />
+
+    <!-- iOS Native Viewport with Safe Area Fit -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Apple iOS Native PWA & Status Bar Integration -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="apdock" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#06080f" />
+
+    <!-- App Icon & Favicon matching user brand -->
+    <link rel="icon" type="image/png" href="app-icon.png" />
+    <link rel="apple-touch-icon" href="app-icon.png" />
+
+    <!-- Google Fonts: Plus Jakarta Sans for Apple Grotesk aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
 </html>

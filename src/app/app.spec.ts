@@ -5,8 +5,7 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-    })
-      .compileComponents();
+    }).compileComponents();
   });
 
   it('should create the app', () => {
@@ -15,9 +14,10 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should have the "apdock" title', () => {
+  it('should have DockAppService and HapticService injected', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
-    expect(app['title']()).toEqual('apdock');
+    expect(app.dock).toBeTruthy();
+    expect(app.haptics).toBeTruthy();
   });
 });
