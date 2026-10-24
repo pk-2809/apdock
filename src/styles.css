@@ -1,76 +1,141 @@
 /* ==========================================================================
-   apdock • Apple iOS Mobile Native Design System
-   Matches Brand Palette: Sky Blue, Amber Family, Emerald Flow, Indigo Health, Coral Home
+   apdock • Global Design Tokens & Adaptive Theme (Light & Dark)
    ========================================================================== */
 
 :root {
-  /* Safe Area Insets for iOS Notch & Dynamic Island */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 
-  /* Brand Theme Colors Extracted Directly from app-icon.png */
+  /* Signature Brand Palette from App Icon Quadrants */
   --brand-sky: #0084ff;
   --brand-cyan: #00c6ff;
-  --grad-roof: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+  --quad-amber: #ff9f0a;
+  --quad-emerald: #30d158;
+  --quad-violet: #5e5ce6;
+  --quad-coral: #ff453a;
 
-  /* Quadrant 1: Family & Community */
-  --quad-family: #ff9f0a;
-  --quad-family-end: #ffb703;
-  --grad-family: linear-gradient(135deg, #ff9f0a 0%, #ffb703 100%);
-  --glow-family: rgba(255, 159, 10, 0.35);
+  /* Typography & Spring Physics */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, monospace;
+  --spring-apple: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Quadrant 2: Schedule & Daily Flow */
-  --quad-flow: #30d158;
-  --quad-flow-end: #05d6a4;
-  --grad-flow: linear-gradient(135deg, #30d158 0%, #05d6a4 100%);
-  --glow-flow: rgba(48, 209, 88, 0.35);
+  /* Light Mode Defaults */
+  --bg-deep: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-card: rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 20px 45px -12px rgba(0, 132, 255, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.04);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --btn-bg: rgba(0, 0, 0, 0.05);
+  --btn-border: rgba(0, 0, 0, 0.12);
+  --btn-color: #0f172a;
+  --btn-hover-bg: rgba(0, 0, 0, 0.09);
 
-  /* Quadrant 3: Health & Fitness */
-  --quad-health: #5e5ce6;
-  --quad-health-end: #7702ff;
-  --grad-health: linear-gradient(135deg, #5e5ce6 0%, #7702ff 100%);
-  --glow-health: rgba(94, 92, 230, 0.35);
-
-  /* Quadrant 4: Home & Space */
-  --quad-home: #ff3b30;
-  --quad-home-end: #ff5e62;
-  --grad-home: linear-gradient(135deg, #ff3b30 0%, #ff5e62 100%);
-  --glow-home: rgba(255, 59, 48, 0.35);
-
-  /* iOS System Materials & OLED Dark Palette */
-  --bg-oled: #06080f;
-  --bg-surface: #0e1220;
-  --bg-surface-elevated: #161c30;
-  --bg-glass-heavy: rgba(14, 18, 32, 0.78);
-  --bg-glass-card: rgba(22, 28, 48, 0.65);
-  --bg-glass-island: rgba(10, 12, 20, 0.92);
-
-  /* Specular Hairlines & Double-Bezel Borders */
-  --border-specular: rgba(255, 255, 255, 0.12);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --inner-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.22);
-  --inner-highlight-glow: inset 0 0 20px rgba(255, 255, 255, 0.05);
-
-  /* Text & Labels */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.72);
-  --text-tertiary: rgba(255, 255, 255, 0.45);
-  --text-quaternary: rgba(255, 255, 255, 0.25);
-
-  /* Apple Spring & Motion Physics */
-  --spring-bounce: cubic-bezier(0.32, 0.72, 0, 1);
-  --spring-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --spring-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  /* Typography */
-  --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
-    'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Splash Tokens (Light Mode) */
+  --splash-bg: #ffffff;
+  --splash-title-color: #090d16;
+  --splash-title-grad: linear-gradient(180deg, #090d16 20%, #1e293b 100%);
+  --splash-icon-shadow: 0 20px 45px -10px rgba(0, 132, 255, 0.25), 0 8px 24px -6px rgba(0, 0, 0, 0.08);
+  --splash-icon-border: 1px solid rgba(0, 0, 0, 0.06);
+  --splash-blob-opacity: 0.38;
+  --splash-dot-opacity: 0.65;
+  --dot-amber-shadow: 0 4px 12px rgba(255, 159, 10, 0.45);
+  --dot-emerald-shadow: 0 4px 12px rgba(48, 209, 88, 0.45);
+  --dot-violet-shadow: 0 4px 12px rgba(94, 92, 230, 0.45);
+  --dot-coral-shadow: 0 4px 12px rgba(255, 69, 58, 0.45);
 }
 
-/* Base Reset & Mobile Touch Constraints */
+/* System Dark Mode (Automatic when preferred) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-deep: #070a12;
+    --bg-surface: #0e1220;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --border-card: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.72);
+    --text-muted: rgba(255, 255, 255, 0.44);
+    --btn-bg: rgba(255, 255, 255, 0.08);
+    --btn-border: rgba(255, 255, 255, 0.16);
+    --btn-color: #ffffff;
+    --btn-hover-bg: rgba(255, 255, 255, 0.14);
+
+    --splash-bg: #070a12;
+    --splash-title-color: #ffffff;
+    --splash-title-grad: linear-gradient(180deg, #ffffff 30%, rgba(255, 255, 255, 0.85) 100%);
+    --splash-icon-shadow: 0 18px 45px -10px rgba(0, 132, 255, 0.4), 0 6px 18px -4px rgba(0, 0, 0, 0.5);
+    --splash-icon-border: 1px solid rgba(255, 255, 255, 0.06);
+    --splash-blob-opacity: 0.28;
+    --splash-dot-opacity: 0.55;
+    --dot-amber-shadow: 0 0 10px rgba(255, 159, 10, 0.75);
+    --dot-emerald-shadow: 0 0 10px rgba(48, 209, 88, 0.75);
+    --dot-violet-shadow: 0 0 10px rgba(94, 92, 230, 0.75);
+    --dot-coral-shadow: 0 0 10px rgba(255, 69, 58, 0.75);
+  }
+}
+
+/* Explicit Dark Mode */
+[data-theme='dark'] {
+  --bg-deep: #070a12;
+  --bg-surface: #0e1220;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --border-card: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-muted: rgba(255, 255, 255, 0.44);
+  --btn-bg: rgba(255, 255, 255, 0.08);
+  --btn-border: rgba(255, 255, 255, 0.16);
+  --btn-color: #ffffff;
+  --btn-hover-bg: rgba(255, 255, 255, 0.14);
+
+  --splash-bg: #070a12;
+  --splash-title-color: #ffffff;
+  --splash-title-grad: linear-gradient(180deg, #ffffff 30%, rgba(255, 255, 255, 0.85) 100%);
+  --splash-icon-shadow: 0 18px 45px -10px rgba(0, 132, 255, 0.4), 0 6px 18px -4px rgba(0, 0, 0, 0.5);
+  --splash-icon-border: 1px solid rgba(255, 255, 255, 0.06);
+  --splash-blob-opacity: 0.28;
+  --splash-dot-opacity: 0.55;
+  --dot-amber-shadow: 0 0 10px rgba(255, 159, 10, 0.75);
+  --dot-emerald-shadow: 0 0 10px rgba(48, 209, 88, 0.75);
+  --dot-violet-shadow: 0 0 10px rgba(94, 92, 230, 0.75);
+  --dot-coral-shadow: 0 0 10px rgba(255, 69, 58, 0.75);
+}
+
+/* Explicit Light Mode */
+[data-theme='light'] {
+  --bg-deep: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-card: rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 20px 45px -12px rgba(0, 132, 255, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.04);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --btn-bg: rgba(0, 0, 0, 0.05);
+  --btn-border: rgba(0, 0, 0, 0.12);
+  --btn-color: #0f172a;
+  --btn-hover-bg: rgba(0, 0, 0, 0.09);
+
+  --splash-bg: #ffffff;
+  --splash-title-color: #090d16;
+  --splash-title-grad: linear-gradient(180deg, #090d16 20%, #1e293b 100%);
+  --splash-icon-shadow: 0 20px 45px -10px rgba(0, 132, 255, 0.25), 0 8px 24px -6px rgba(0, 0, 0, 0.08);
+  --splash-icon-border: 1px solid rgba(0, 0, 0, 0.06);
+  --splash-blob-opacity: 0.38;
+  --splash-dot-opacity: 0.65;
+  --dot-amber-shadow: 0 4px 12px rgba(255, 159, 10, 0.45);
+  --dot-emerald-shadow: 0 4px 12px rgba(48, 209, 88, 0.45);
+  --dot-violet-shadow: 0 4px 12px rgba(94, 92, 230, 0.45);
+  --dot-coral-shadow: 0 4px 12px rgba(255, 69, 58, 0.45);
+}
+
 *,
 *::before,
 *::after {
@@ -85,105 +150,23 @@ html,
 body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  background-color: #030407;
+  min-height: 100dvh;
+  background-color: var(--bg-deep);
   color: var(--text-primary);
-  font-family: var(--font-system);
-  font-size: 15px;
-  line-height: 1.4;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
+  font-family: var(--font-sans);
+  overflow: hidden;
   user-select: none;
+  -webkit-user-select: none;
   touch-action: manipulation;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-}
-
-/* Hardware accelerated buttons */
 button {
-  background: none;
   border: none;
+  background: none;
   font-family: inherit;
   color: inherit;
   cursor: pointer;
   outline: none;
   touch-action: manipulation;
-}
-
-/* Touch active micro-compression */
-.pressable {
-  transition: transform 0.16s var(--spring-bounce), opacity 0.16s ease;
-  will-change: transform;
-}
-.pressable:active {
-  transform: scale(0.96);
-  opacity: 0.9;
-}
-
-/* Doppelrand / Double-Bezel Card Utility */
-.double-bezel {
-  position: relative;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-specular);
-  border-radius: 26px;
-  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5), var(--inner-highlight);
-  overflow: hidden;
-}
-
-.double-bezel::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.02) 60%,
-    transparent 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Glassmorphism Frosted Backdrop */
-.glass-material {
-  background: var(--bg-glass-heavy);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid var(--border-specular);
-}
-
-/* Subtle Animated Mesh Glow */
-@keyframes ambientGlowPulse {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.28;
-  }
-  50% {
-    transform: translate(15px, -10px) scale(1.12);
-    opacity: 0.42;
-  }
-}
-
-.mesh-glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(65px);
-  pointer-events: none;
-  animation: ambientGlowPulse 9s ease-in-out infinite;
 }

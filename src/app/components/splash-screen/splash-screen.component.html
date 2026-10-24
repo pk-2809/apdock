@@ -1,0 +1,41 @@
+<div
+  class="cute-splash-root"
+  [class.is-leaving]="isLeaving()"
+  (click)="dismiss()"
+  role="region"
+  aria-label="apdock splash screen"
+>
+  <!-- Dreamy Soft Halo (Matching Logo Colors: Sky Blue roof + Amber, Mint, Violet, Coral) -->
+  <div class="pastel-aura" aria-hidden="true">
+    <div class="aura-blob blob-sky"></div>
+    <div class="aura-blob blob-amber"></div>
+    <div class="aura-blob blob-emerald"></div>
+    <div class="aura-blob blob-coral"></div>
+  </div>
+
+  <!-- Cute Centered Brand Stage -->
+  <div class="splash-card">
+    <!-- Playful Floating Icon with Soft Glow -->
+    <div class="icon-bubble">
+      <img
+        src="app-icon.png"
+        alt="apdock house logo"
+        class="cute-logo-img"
+        width="118"
+        height="118"
+        loading="eager"
+      />
+    </div>
+
+    <!-- Soft Friendly Brand Title -->
+    <h1 class="cute-title">apdock</h1>
+
+    <!-- 4 Playful Bouncing Quadrant Dots (Matching logo tiles: Amber, Emerald, Violet, Coral) -->
+    <div class="cute-dots-loader" aria-label="Loading apdock">
+      <span class="cute-dot dot-amber" title="Family"></span>
+      <span class="cute-dot dot-emerald" title="Flow"></span>
+      <span class="cute-dot dot-violet" title="Health"></span>
+      <span class="cute-dot dot-coral" title="Home"></span>
+    </div>
+  </div>
+</div>

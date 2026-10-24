@@ -1,37 +1,73 @@
-<div class="mobile-viewport-canvas">
+@if (showSplash()) {
+  <app-splash-screen (finished)="onSplashFinished()"></app-splash-screen>
+} @else {
+  <div class="app-container">
+    <main class="app-ready-view">
+      <div class="glass-hero-card">
+        <div class="app-icon-badge">
+          <img src="app-icon.png" alt="apdock" width="56" height="56" />
+        </div>
+        <div class="hero-content">
+          <span class="status-tag">SPLASH ACTIVE</span>
+          <h2 class="hero-title">Welcome to apdock</h2>
+          <p class="hero-desc">
+            Your cute minimal splash screen is now fully responsive in both <strong>Light</strong> and <strong>Dark</strong> modes.
+          </p>
+        </div>
 
-  <!-- Ambient Luxury Mesh Glow Orbs -->
-  <div class="mesh-glow-orb orb-sky" aria-hidden="true"></div>
-  <div class="mesh-glow-orb orb-amber" aria-hidden="true"></div>
-  <div class="mesh-glow-orb orb-emerald" aria-hidden="true"></div>
-  <div class="mesh-glow-orb orb-violet" aria-hidden="true"></div>
+        <!-- Mode Switcher -->
+        <div class="theme-switcher" role="group" aria-label="Select color theme">
+          <button
+            type="button"
+            class="theme-pill"
+            [class.active]="currentTheme() === 'light'"
+            (click)="setTheme('light')"
+            aria-label="Light mode"
+          >
+            ☀️ Light
+          </button>
+          <button
+            type="button"
+            class="theme-pill"
+            [class.active]="currentTheme() === 'dark'"
+            (click)="setTheme('dark')"
+            aria-label="Dark mode"
+          >
+            🌙 Dark
+          </button>
+          <button
+            type="button"
+            class="theme-pill"
+            [class.active]="currentTheme() === 'system'"
+            (click)="setTheme('system')"
+            aria-label="System mode"
+          >
+            ⚙️ Auto
+          </button>
+        </div>
 
-  <!-- iOS Phone Shell Wrapper (Edge-to-edge on mobile, Centered iPhone on desktop) -->
-  <div class="iphone-shell-container">
-    
-    <!-- Top System Bar -->
-    <app-ios-status-bar></app-ios-status-bar>
+        <button type="button" class="action-btn" (click)="triggerSplash()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 16h5v5" />
+          </svg>
+          <span>Preview Splash Screen</span>
+        </button>
+      </div>
 
-    <!-- Apple Dynamic Island Notch Component -->
-    <app-dynamic-island></app-dynamic-island>
-
-    <!-- Scrollable Screen Content Area -->
-    <div class="mobile-scroll-container">
-      <!-- App Brand Header -->
-      <app-header></app-header>
-
-      <!-- Quadrant Category Segmented Slider -->
-      <app-segmented-filter></app-segmented-filter>
-
-      <!-- Interactive 4-Quadrant Home Grid -->
-      <app-quadrant-grid></app-quadrant-grid>
-    </div>
-
-    <!-- Floating Liquid Retina Glass Dock -->
-    <app-ios-dock></app-ios-dock>
-
-    <!-- Native iOS Bottom Sheet Modal -->
-    <app-ios-bottom-sheet></app-ios-bottom-sheet>
-
+      <router-outlet />
+    </main>
   </div>
-</div>
+}

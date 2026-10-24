@@ -1,97 +1,159 @@
-/* ==========================================================================
-   apdock • Apple iOS Mobile Native Viewport Layout
-   ========================================================================== */
-
 :host {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  min-height: 100dvh;
 }
 
-.mobile-viewport-canvas {
+.app-container {
   width: 100vw;
   height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #030407;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  padding: calc(var(--sat) + 20px) 24px calc(var(--sab) + 24px);
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Ambient Background Mesh Orbs */
-.orb-sky {
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, var(--brand-sky) 0%, transparent 70%);
-  top: -80px;
-  left: 10%;
-}
-
-.orb-amber {
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, var(--quad-family) 0%, transparent 70%);
-  top: 30%;
-  right: -60px;
-  animation-delay: -3s;
-}
-
-.orb-emerald {
-  width: 240px;
-  height: 240px;
-  background: radial-gradient(circle, var(--quad-flow) 0%, transparent 70%);
-  bottom: 20%;
-  left: -50px;
-  animation-delay: -5s;
-}
-
-.orb-violet {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, var(--quad-health) 0%, transparent 70%);
-  bottom: -60px;
-  right: 15%;
-  animation-delay: -2s;
-}
-
-/* iPhone Hardware Enclosure */
-.iphone-shell-container {
+.app-ready-view {
   width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  background: var(--bg-oled);
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Desktop Presentation Mode: Precision iPhone 16 Pro Frame */
-@media (min-width: 601px) {
-  .iphone-shell-container {
-    width: 420px;
-    height: min(92dvh, 880px);
-    border-radius: 54px;
-    border: 3.5px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 
-      0 25px 60px -15px rgba(0, 0, 0, 0.95),
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 0 25px rgba(0, 132, 255, 0.2);
-  }
-}
-
-/* Internal Scroll Area */
-.mobile-scroll-container {
-  flex: 1;
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  position: relative;
+  align-items: center;
   z-index: 10;
-  padding-bottom: 20px;
+  animation: fadeInApp 0.6s var(--spring-apple) both;
+}
+
+.glass-hero-card {
+  width: 100%;
+  padding: 32px 24px;
+  border-radius: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  backdrop-filter: blur(24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--card-shadow);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px -4px rgba(0, 132, 255, 0.35);
+  margin-bottom: 20px;
+}
+
+.app-icon-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--quad-emerald);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.hero-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 320px;
+  margin-bottom: 20px;
+}
+
+/* Theme Switcher Segmented Control */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  padding: 4px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+.theme-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.theme-pill:hover {
+  color: var(--text-primary);
+}
+
+.theme-pill.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--btn-color);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.25s var(--spring-apple);
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: var(--btn-hover-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 132, 255, 0.25);
+}
+
+.action-btn:active {
+  transform: scale(0.97);
+}
+
+@keyframes fadeInApp {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

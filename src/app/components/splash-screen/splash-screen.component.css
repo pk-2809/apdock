@@ -1,0 +1,265 @@
+/* ==========================================================================
+   apdock • Cute & Minimal Splash Screen
+   Adaptive Light & Dark Mode
+   ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cute-splash-root {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  background-color: var(--splash-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+  padding: env(safe-area-inset-top, 20px) 24px env(safe-area-inset-bottom, 20px);
+  transition:
+    background-color 0.35s ease,
+    opacity 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.cute-splash-root.is-leaving {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Dreamy Soft Pastel Aura (Logo Colors: Sky Blue, Amber, Mint, Coral)
+   -------------------------------------------------------------------------- */
+.pastel-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.aura-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(85px);
+  opacity: var(--splash-blob-opacity);
+  will-change: transform;
+  animation: blobFloat 8s ease-in-out infinite alternate;
+  transition: opacity 0.35s ease;
+}
+
+.blob-sky {
+  width: 290px;
+  height: 290px;
+  background: radial-gradient(circle, #0084ff 0%, transparent 70%);
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.blob-amber {
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, #ff9f0a 0%, transparent 70%);
+  top: 36%;
+  left: 26%;
+  animation-duration: 7s;
+  animation-delay: -1.5s;
+}
+
+.blob-emerald {
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, #30d158 0%, transparent 70%);
+  top: 34%;
+  right: 26%;
+  animation-duration: 9s;
+  animation-delay: -3.5s;
+}
+
+.blob-coral {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, #ff453a 0%, transparent 70%);
+  bottom: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-duration: 10s;
+  animation-delay: -5s;
+}
+
+@keyframes blobFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8px, -10px) scale(1.06);
+  }
+  100% {
+    transform: translate(-6px, 8px) scale(0.96);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cute Centered Brand Card Stage
+   -------------------------------------------------------------------------- */
+.splash-card {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: cutePopEntrance 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Floating House Icon Bubble */
+.icon-bubble {
+  width: 120px;
+  height: 120px;
+  border-radius: 34px;
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--splash-icon-border);
+  box-shadow: var(--splash-icon-shadow);
+  animation: gentleFloat 3.2s ease-in-out infinite 0.8s;
+  will-change: transform;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.cute-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Friendly Rounded Brand Title */
+.cute-title {
+  margin-top: 20px;
+  font-family: var(--font-sans);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--splash-title-color);
+  background: var(--splash-title-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: color 0.35s ease;
+}
+
+/* 4 Cute Playful Quadrant Dancing Dots (Amber, Emerald, Violet, Coral) */
+.cute-dots-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.cute-dot {
+  width: 7.5px;
+  height: 7.5px;
+  border-radius: 50%;
+  display: inline-block;
+  will-change: transform;
+  animation: dotWave 1.25s ease-in-out infinite;
+  transition: box-shadow 0.35s ease;
+}
+
+.dot-amber {
+  background-color: var(--quad-amber);
+  box-shadow: var(--dot-amber-shadow);
+  animation-delay: 0s;
+}
+
+.dot-emerald {
+  background-color: var(--quad-emerald);
+  box-shadow: var(--dot-emerald-shadow);
+  animation-delay: 0.16s;
+}
+
+.dot-violet {
+  background-color: var(--quad-violet);
+  box-shadow: var(--dot-violet-shadow);
+  animation-delay: 0.32s;
+}
+
+.dot-coral {
+  background-color: var(--quad-coral);
+  box-shadow: var(--dot-coral-shadow);
+  animation-delay: 0.48s;
+}
+
+/* --------------------------------------------------------------------------
+   Animations: Gentle Pop & Floaty Float
+   -------------------------------------------------------------------------- */
+@keyframes cutePopEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(12px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.04) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes dotWave {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: var(--splash-dot-opacity);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* Responsive Touch Scale */
+@media (max-width: 480px) {
+  .icon-bubble {
+    width: 108px;
+    height: 108px;
+    border-radius: 30px;
+  }
+
+  .cute-title {
+    font-size: 34px;
+    margin-top: 18px;
+  }
+
+  .cute-dots-loader {
+    margin-top: 16px;
+    gap: 7px;
+  }
+
+  .cute-dot {
+    width: 7px;
+    height: 7px;
+  }
+}
