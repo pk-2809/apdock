@@ -1,0 +1,189 @@
+<div
+  *ngIf="isOpen"
+  class="diet-modal-overlay"
+  (click)="onDismiss()"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dietModalTitle"
+>
+  <div class="diet-modal-card" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-title-box">
+        <h2 id="dietModalTitle" class="modal-title">Personalize Diet</h2>
+        <p class="modal-subtext">Choose your goal and meal preference</p>
+      </div>
+      <button
+        type="button"
+        class="modal-close-btn"
+        (click)="onDismiss()"
+        aria-label="Close"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="close-svg"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Section 1: Goal -->
+    <div class="pref-section">
+      <span class="section-heading">GOAL</span>
+      <div class="tiles-row tiles-2">
+        <button
+          type="button"
+          class="pref-tile goal-loss"
+          [class.active]="selectedGoal() === 'loss'"
+          (click)="setGoal('loss')"
+        >
+          <div class="tile-icon-wrap loss-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tile-svg"
+            >
+              <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+              <polyline points="16 17 22 17 22 11" />
+            </svg>
+          </div>
+          <span class="tile-label">Weight Loss</span>
+        </button>
+
+        <button
+          type="button"
+          class="pref-tile goal-gain"
+          [class.active]="selectedGoal() === 'gain'"
+          (click)="setGoal('gain')"
+        >
+          <div class="tile-icon-wrap gain-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tile-svg"
+            >
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+              <polyline points="16 7 22 7 22 13" />
+            </svg>
+          </div>
+          <span class="tile-label">Weight Gain</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section 2: Dietary Preference -->
+    <div class="pref-section">
+      <span class="section-heading">DIET PREFERENCE</span>
+      <div class="tiles-row tiles-3">
+        <!-- Vegetarian -->
+        <button
+          type="button"
+          class="pref-tile diet-veg"
+          [class.active]="selectedDietType() === 'veg'"
+          (click)="setDietType('veg')"
+        >
+          <div class="tile-icon-wrap veg-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tile-svg"
+            >
+              <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 20 3c0 9-4 17-9 17Z" />
+              <path d="M11 13c1.5-1.5 3.5-2.5 6-3" />
+            </svg>
+          </div>
+          <span class="tile-label">Vegetarian</span>
+        </button>
+
+        <!-- Non-Veg -->
+        <button
+          type="button"
+          class="pref-tile diet-nonveg"
+          [class.active]="selectedDietType() === 'nonveg'"
+          (click)="setDietType('nonveg')"
+        >
+          <div class="tile-icon-wrap nonveg-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tile-svg"
+            >
+              <path d="m15.4 15.6 3.3-3.3a4.5 4.5 0 0 0-6.4-6.4l-3.3 3.3a4.5 4.5 0 0 0 6.4 6.4Z" />
+              <path d="m9 15-4 4" />
+              <circle cx="4" cy="20" r="1.5" />
+            </svg>
+          </div>
+          <span class="tile-label">Non-Veg</span>
+        </button>
+
+        <!-- Both -->
+        <button
+          type="button"
+          class="pref-tile diet-both"
+          [class.active]="selectedDietType() === 'both'"
+          (click)="setDietType('both')"
+        >
+          <div class="tile-icon-wrap both-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tile-svg"
+            >
+              <circle cx="9" cy="12" r="5" />
+              <circle cx="15" cy="12" r="5" />
+            </svg>
+          </div>
+          <span class="tile-label">Both</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Continue CTA Button -->
+    <button
+      type="button"
+      id="submitDietPreferenceBtn"
+      class="cta-continue-btn"
+      [disabled]="isSaving()"
+      (click)="onConfirm()"
+    >
+      <span *ngIf="!isSaving()">Continue</span>
+      <span *ngIf="isSaving()" class="btn-spinner-label">
+        <span class="mini-spinner"></span>
+        Saving...
+      </span>
+    </button>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 <div class="auth-page-root" role="main">
-  <!-- Dreamy Ambient Aura Blobs -->
+  <!-- Ambient Pastel Aura Blobs -->
   <div class="ambient-glow" aria-hidden="true">
     <div class="glow-blob blob-sky"></div>
     <div class="glow-blob blob-amber"></div>
@@ -15,24 +15,19 @@
       </div>
       <h1 class="brand-title">apdock</h1>
       <p class="brand-subtitle">
-        @if (auth.isAuthenticated()) {
-          Your personal dock is online and synced.
-        } @else if (mode() === 'signin') {
-          Welcome back! Sign in to access your space.
+        @if (mode() === 'signin') {
+          Sign in with your username & PIN.
         } @else {
-          Create your space. Simple, cozy & private.
+          Create your space with instant unique @username.
         }
       </p>
     </header>
 
-    @if (!auth.isAuthenticated()) {
-      <!-- Main Auth Bottom-Sheet Card -->
-      <div class="auth-card" [class.mode-signup]="mode() === 'signup'">
-        <!-- iOS Bottom Sheet Pull Indicator -->
-        <div class="sheet-handle" aria-hidden="true"></div>
-
-        <!-- Segmented Mode Switcher (Sliding Pill Indicator) -->
-        <div class="mode-tabs" role="tablist" aria-label="Authentication modes">
+    <!-- Main Auth Bottom-Sheet Card (Starts from bottom, zero handle) -->
+    <div class="auth-card" [class.mode-signup]="mode() === 'signup'" [class.is-loading-active]="auth.isSubmitting()">
+        
+        <!-- Segmented Mode Switcher (Sliding Pill) -->
+        <div class="mode-tabs" role="tablist" aria-label="Authentication mode selection">
           <div
             class="tab-indicator-pill"
             [class.pill-right]="mode() === 'signup'"
@@ -45,6 +40,7 @@
             (click)="toggleMode('signin')"
             role="tab"
             [attr.aria-selected]="mode() === 'signin'"
+            [disabled]="auth.isSubmitting()"
           >
             Sign In
           </button>
@@ -55,6 +51,7 @@
             (click)="toggleMode('signup')"
             role="tab"
             [attr.aria-selected]="mode() === 'signup'"
+            [disabled]="auth.isSubmitting()"
           >
             Create Account
           </button>
@@ -89,9 +86,39 @@
           </div>
         </div>
 
-        <!-- Interactive Form -->
+        <!-- Interactive Form with Smooth Zero-Shift Field Animations -->
         <form (ngSubmit)="handleSubmit()" class="auth-form" novalidate>
-          <!-- Full Name Field (Smoothly Expands on Sign Up) -->
+          
+          <!-- [SIGN IN ONLY] Username Input -->
+          <div
+            class="smooth-expandable"
+            [class.is-expanded]="mode() === 'signin'"
+            aria-hidden="{{ mode() !== 'signin' }}"
+          >
+            <div class="smooth-expandable-inner">
+              <div class="form-group">
+                <label for="usernameInput" class="form-label">Username</label>
+                <div class="input-wrapper">
+                  <span class="field-icon-at" aria-hidden="true">@</span>
+                  <input
+                    id="usernameInput"
+                    name="username"
+                    type="text"
+                    class="form-input username-input"
+                    placeholder="yourname (e.g. test or alex)"
+                    [(ngModel)]="username"
+                    [tabindex]="mode() === 'signin' ? 0 : -1"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                    autocomplete="username"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- [SIGN UP ONLY] Full Name Input -->
           <div
             class="smooth-expandable"
             [class.is-expanded]="mode() === 'signup'"
@@ -131,41 +158,49 @@
             </div>
           </div>
 
-          <!-- Email Input -->
-          <div class="form-group">
-            <label for="emailInput" class="form-label">Email Address</label>
-            <div class="input-wrapper">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="field-icon"
-              >
-                <rect width="20" height="16" x="2" y="4" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-              <input
-                id="emailInput"
-                name="email"
-                type="email"
-                class="form-input"
-                placeholder="you@example.com"
-                [(ngModel)]="email"
-                required
-                autocomplete="email"
-              />
+          <!-- [SIGN UP ONLY] Email Address Input -->
+          <div
+            class="smooth-expandable"
+            [class.is-expanded]="mode() === 'signup'"
+            aria-hidden="{{ mode() !== 'signup' }}"
+          >
+            <div class="smooth-expandable-inner">
+              <div class="form-group">
+                <label for="emailInput" class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="field-icon"
+                  >
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  <input
+                    id="emailInput"
+                    name="email"
+                    type="email"
+                    class="form-input"
+                    placeholder="alex@example.com"
+                    [(ngModel)]="email"
+                    [tabindex]="mode() === 'signup' ? 0 : -1"
+                    autocomplete="email"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Password Input -->
+          <!-- [SHARED: SIGN IN & SIGN UP] PIN Input -->
           <div class="form-group">
-            <label for="passwordInput" class="form-label">Password</label>
+            <label for="pinInput" class="form-label">PIN</label>
             <div class="input-wrapper">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -183,22 +218,26 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <input
-                id="passwordInput"
-                name="password"
-                [type]="showPassword() ? 'text' : 'password'"
-                class="form-input password-input"
-                placeholder="At least 6 characters"
-                [(ngModel)]="password"
+                id="pinInput"
+                name="pin"
+                [type]="showPin() ? 'text' : 'password'"
+                inputmode="numeric"
+                pattern="[0-9]{4}"
+                maxlength="4"
+                class="form-input pin-input"
+                placeholder="••••"
+                [(ngModel)]="pin"
+                (input)="onPinInput($event)"
                 required
                 autocomplete="current-password"
               />
               <button
                 type="button"
                 class="toggle-eye-btn"
-                (click)="togglePasswordVisibility()"
-                aria-label="Toggle password visibility"
+                (click)="togglePinVisibility()"
+                aria-label="Toggle PIN visibility"
               >
-                @if (showPassword()) {
+                @if (showPin()) {
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -235,7 +274,7 @@
             </div>
           </div>
 
-          <!-- Confirm Password (Smoothly Expands on Sign Up) -->
+          <!-- [SIGN UP ONLY] Confirm PIN Input -->
           <div
             class="smooth-expandable"
             [class.is-expanded]="mode() === 'signup'"
@@ -243,7 +282,7 @@
           >
             <div class="smooth-expandable-inner">
               <div class="form-group">
-                <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
+                <label for="confirmPinInput" class="form-label">Confirm PIN</label>
                 <div class="input-wrapper">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -261,15 +300,59 @@
                     <path d="m9 12 2 2 4-4" />
                   </svg>
                   <input
-                    id="confirmPasswordInput"
-                    name="confirmPassword"
-                    [type]="showPassword() ? 'text' : 'password'"
-                    class="form-input"
-                    placeholder="Re-enter password"
-                    [(ngModel)]="confirmPassword"
+                    id="confirmPinInput"
+                    name="confirmPin"
+                    [type]="showConfirmPin() ? 'text' : 'password'"
+                    inputmode="numeric"
+                    pattern="[0-9]{4}"
+                    maxlength="4"
+                    class="form-input pin-input"
+                    placeholder="••••"
+                    [(ngModel)]="confirmPin"
+                    (input)="onConfirmPinInput($event)"
                     [tabindex]="mode() === 'signup' ? 0 : -1"
                     autocomplete="new-password"
                   />
+                  <button
+                    type="button"
+                    class="toggle-eye-btn"
+                    (click)="toggleConfirmPinVisibility()"
+                    aria-label="Toggle confirm PIN visibility"
+                  >
+                    @if (showConfirmPin()) {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                        <line x1="2" x2="22" y1="2" y2="22" />
+                      </svg>
+                    } @else {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    }
+                  </button>
                 </div>
               </div>
             </div>
@@ -282,145 +365,66 @@
             [disabled]="auth.isSubmitting()"
             aria-label="Submit authentication"
           >
-            @if (auth.isSubmitting()) {
-              <span class="btn-spinner"></span>
-              <span>{{ mode() === 'signup' ? 'Creating account...' : 'Signing in...' }}</span>
-            } @else {
-              <span class="btn-caption">{{ mode() === 'signup' ? 'Create Free Account' : 'Sign In to apdock' }}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="btn-arrow"
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            }
+            <span class="btn-caption">{{ mode() === 'signup' ? 'Sign Up' : 'Sign In' }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="btn-arrow"
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
           </button>
         </form>
 
-        <!-- Divider -->
-        <div class="divider">
-          <span class="divider-line"></span>
-          <span class="divider-text">or continue with</span>
-          <span class="divider-line"></span>
-        </div>
+        <!-- Progressive Animated Loading Screen Overlay (Appears during Login & Account Creation) -->
+        @if (auth.isSubmitting()) {
+          <div class="loading-overlay" role="status" aria-live="assertive">
+            <div class="loading-content">
+              <!-- Orbiting Quadrant Pearls Loader -->
+              <div class="loader-quadrant-cluster" aria-hidden="true">
+                <div class="loader-center-icon">
+                  <img src="app-icon.png" alt="" width="44" height="44" class="loader-app-icon" />
+                </div>
+                <span class="orbit-pearl pearl-amber"></span>
+                <span class="orbit-pearl pearl-emerald"></span>
+                <span class="orbit-pearl pearl-violet"></span>
+                <span class="orbit-pearl pearl-coral"></span>
+              </div>
 
-        <!-- Google Sign-In -->
-        <button
-          type="button"
-          class="google-btn"
-          (click)="handleGoogleSignIn()"
-          [disabled]="auth.isSubmitting()"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" class="google-icon">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
-          </svg>
-          <span>Continue with Google</span>
-        </button>
+              <!-- Main Title -->
+              <h3 class="loading-title">
+                {{ mode() === 'signup' ? 'Crafting Your Space' : 'Unlocking apdock' }}
+              </h3>
 
-        <!-- Backend Sync Notice -->
-        <div
-          class="smooth-sync-wrapper"
-          [class.is-syncing]="auth.isBackendSyncing()"
-          aria-live="polite"
-        >
-          <div class="smooth-sync-inner">
-            <div class="sync-banner">
-              <span class="sync-dot"></span>
-              <span>Syncing user profile with apdock Firestore...</span>
+              <!-- Progressive Verbiage Badge with Live Update -->
+              <div class="loading-verbiage-badge">
+                <span class="loading-pulse-dot"></span>
+                <span class="loading-verbiage-text">{{ auth.loadingStage() }}</span>
+              </div>
+
+              <!-- Smooth Progressive Progress Bar -->
+              <div class="progress-track" aria-hidden="true">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="auth.loadingPercentage()"
+                ></div>
+              </div>
+
+              <!-- Step Counter Indicator -->
+              <div class="step-indicator">
+                <span>Step {{ auth.loadingStep() }} of {{ auth.totalLoadingSteps() }}</span>
+              </div>
             </div>
           </div>
-        </div>
+        }
       </div>
-    } @else {
-      <!-- Authenticated Member Profile Bottom Sheet -->
-      <div class="auth-card authenticated-card animate-pop">
-        <div class="sheet-handle" aria-hidden="true"></div>
-
-        <div class="user-avatar-shell">
-          @if (auth.currentUser()?.photoURL) {
-            <img [src]="auth.currentUser()?.photoURL" alt="User avatar" class="user-avatar-img" />
-          } @else {
-            <div class="user-avatar-initials">
-              {{ (auth.currentUser()?.displayName || auth.currentUser()?.email || 'A')[0].toUpperCase() }}
-            </div>
-          }
-        </div>
-
-        <h2 class="member-name">
-          {{ auth.currentUser()?.displayName || 'Apdock Member' }}
-        </h2>
-        <p class="member-email">{{ auth.currentUser()?.email }}</p>
-
-        <!-- Backend Cloud Sync Badge -->
-        <div class="cloud-sync-badge">
-          <span class="beacon-dot"></span>
-          <span>Firestore Backend Synced • Active</span>
-        </div>
-
-        <!-- 4 Quadrants Preview Grid -->
-        <div class="quadrant-dock-preview">
-          <div class="preview-tile tile-amber">
-            <span class="tile-dot"></span>
-            <span class="tile-title">Family</span>
-          </div>
-          <div class="preview-tile tile-emerald">
-            <span class="tile-dot"></span>
-            <span class="tile-title">Flow</span>
-          </div>
-          <div class="preview-tile tile-violet">
-            <span class="tile-dot"></span>
-            <span class="tile-title">Health</span>
-          </div>
-          <div class="preview-tile tile-coral">
-            <span class="tile-dot"></span>
-            <span class="tile-title">Home</span>
-          </div>
-        </div>
-
-        <!-- Sign Out Action -->
-        <button type="button" class="signout-btn" (click)="handleSignOut()">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" x2="9" y1="12" y2="12" />
-          </svg>
-          <span>Sign Out</span>
-        </button>
-      </div>
-    }
   </div>
 </div>

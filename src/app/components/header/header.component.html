@@ -1,0 +1,428 @@
+<header class="app-header" role="banner">
+  <div class="header-container">
+    <!-- Brand identity: Logo & Title -->
+    <div class="header-brand">
+      <div class="brand-logo-frame">
+        <img src="app-icon.png" alt="apdock" width="32" height="32" class="brand-logo-img" />
+      </div>
+      <div class="brand-text-block">
+        <span class="brand-name">apdock</span>
+      </div>
+    </div>
+
+    <!-- Header Actions: Diet Preference Popover & Settings Button -->
+    <div class="header-actions">
+      <!-- Diet Preference Button (Only visible when user is inside the Diet module) -->
+      @if (isDietModule()) {
+        <button
+          type="button"
+          id="dietPrefTriggerBtn"
+          class="diet-pref-trigger-btn"
+          [class.active]="isDietPrefMenuOpen()"
+          (click)="toggleDietPrefMenu($event)"
+          title="Diet Preferences"
+          aria-label="Diet Preferences"
+          [attr.aria-expanded]="isDietPrefMenuOpen()"
+          aria-haspopup="menu"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="diet-pref-icon"
+          >
+            <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 20 3c0 9-4 17-9 17Z" />
+            <path d="M11 13c1.5-1.5 3.5-2.5 6-3" />
+          </svg>
+        </button>
+
+        <!-- Diet Preference Popover Menu -->
+        @if (isDietPrefMenuOpen()) {
+          <div
+            class="diet-pref-popover"
+            role="menu"
+            aria-label="Diet Preferences Menu"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Popover Header -->
+            <div class="popover-title-row">
+              <div class="popover-title-block">
+                <span class="popover-heading">Diet Preferences</span>
+                <span class="popover-sub">Goal and meal style</span>
+              </div>
+              <span class="popover-indicator-dot" aria-hidden="true"></span>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Goal Section -->
+            <div class="popover-section">
+              <span class="popover-section-label">GOAL</span>
+              <div class="popover-segmented-row cols-2" role="group" aria-label="Goal selector">
+                <button
+                  type="button"
+                  class="popover-seg-btn seg-loss"
+                  [class.active]="currentGoal() === 'loss'"
+                  (click)="updateGoal('loss')"
+                >
+                  <span class="seg-icon">📉</span>
+                  <span>Weight Loss</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="popover-seg-btn seg-gain"
+                  [class.active]="currentGoal() === 'gain'"
+                  (click)="updateGoal('gain')"
+                >
+                  <span class="seg-icon">📈</span>
+                  <span>Weight Gain</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Diet Preference Section -->
+            <div class="popover-section">
+              <span class="popover-section-label">DIET PREFERENCE</span>
+              <div class="popover-segmented-row cols-3" role="group" aria-label="Diet type selector">
+                <button
+                  type="button"
+                  class="popover-seg-btn seg-veg"
+                  [class.active]="currentDietType() === 'veg'"
+                  (click)="updateDietType('veg')"
+                >
+                  <span class="seg-icon">🌿</span>
+                  <span>Veg</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="popover-seg-btn seg-nonveg"
+                  [class.active]="currentDietType() === 'nonveg'"
+                  (click)="updateDietType('nonveg')"
+                >
+                  <span class="seg-icon">🍗</span>
+                  <span>Non-Veg</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="popover-seg-btn seg-both"
+                  [class.active]="currentDietType() === 'both'"
+                  (click)="updateDietType('both')"
+                >
+                  <span class="seg-icon">🥗</span>
+                  <span>Both</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Detailed Customizer Trigger -->
+            <button
+              type="button"
+              class="popover-action-btn"
+              (click)="openFullDietModal()"
+              role="menuitem"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="action-icon"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span>Full Customizer...</span>
+            </button>
+          </div>
+        }
+      }
+
+      <!-- Settings Trigger Button -->
+      <button
+        type="button"
+        id="settingsTriggerBtn"
+        class="settings-trigger-btn"
+        [class.active]="isMenuOpen()"
+        (click)="toggleMenu($event)"
+        title="Settings and preferences"
+        aria-label="Settings and preferences"
+        [attr.aria-expanded]="isMenuOpen()"
+        aria-haspopup="menu"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="settings-icon"
+          [class.rotated]="isMenuOpen()"
+        >
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          ></path>
+        </svg>
+      </button>
+
+      <!-- Settings Dropdown Menu -->
+      @if (isMenuOpen()) {
+        <div class="settings-dropdown" role="menu" aria-label="Settings Menu" (click)="$event.stopPropagation()">
+          <!-- Current Account Summary (when authenticated) -->
+          @if (auth.isAuthenticated()) {
+            <div class="dropdown-account-badge">
+              <div class="dropdown-avatar">
+                {{ (auth.userDisplayName() || 'A')[0].toUpperCase() }}
+              </div>
+              <div class="dropdown-account-meta">
+                <span class="dropdown-name">{{ auth.userDisplayName() }}</span>
+                @if (auth.userUsername()) {
+                  <span class="dropdown-handle">&#64;{{ auth.userUsername() }}</span>
+                }
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+          }
+
+          <!-- Theme Mode Selection -->
+          <div class="dropdown-section">
+            <span class="dropdown-section-label">Appearance</span>
+            <div class="dropdown-theme-segmented" role="group" aria-label="Theme mode selector">
+              <button
+                type="button"
+                class="dropdown-theme-btn"
+                [class.active]="themeService.currentTheme() === 'light'"
+                (click)="setTheme('light')"
+                title="Light mode"
+              >
+                <span class="theme-icon">☀️</span>
+                <span class="theme-text">Light</span>
+              </button>
+              <button
+                type="button"
+                class="dropdown-theme-btn"
+                [class.active]="themeService.currentTheme() === 'dark'"
+                (click)="setTheme('dark')"
+                title="Dark mode"
+              >
+                <span class="theme-icon">🌙</span>
+                <span class="theme-text">Dark</span>
+              </button>
+              <button
+                type="button"
+                class="dropdown-theme-btn"
+                [class.active]="themeService.currentTheme() === 'system'"
+                (click)="setTheme('system')"
+                title="System default"
+              >
+                <span class="theme-icon">⚙️</span>
+                <span class="theme-text">Auto</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <!-- PWA Updates Section -->
+          <div class="dropdown-section">
+            <span class="dropdown-section-label">Application</span>
+            <button
+              id="checkForUpdatesBtn"
+              type="button"
+              class="dropdown-action-btn update-btn"
+              (click)="checkForUpdates()"
+              [disabled]="isCheckingUpdate()"
+              role="menuitem"
+              title="Check for updates & refresh latest PWA build"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="action-icon update-icon"
+                [class.spinning]="isCheckingUpdate()"
+              >
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                <path d="M16 16h5v5" />
+              </svg>
+              <span>{{ isCheckingUpdate() ? 'Updating...' : 'Check for Updates' }}</span>
+            </button>
+
+            @if (updateStatusMessage()) {
+              <div class="update-feedback-pill" [class.error-state]="isUpdateError()" role="status">
+                <span class="feedback-pulse" [class.error-pulse]="isUpdateError()" aria-hidden="true"></span>
+                <span>{{ updateStatusMessage() }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Authenticated Actions: Sign Out & Delete Account -->
+          @if (auth.isAuthenticated()) {
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-section actions-section">
+              <!-- Sign Out -->
+              <button
+                type="button"
+                class="dropdown-action-btn signout-btn"
+                (click)="handleSignOut()"
+                role="menuitem"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="action-icon"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" x2="9" y1="12" y2="12" />
+                </svg>
+                <span>Sign Out</span>
+              </button>
+
+              <!-- Delete Account -->
+              <button
+                type="button"
+                class="dropdown-action-btn delete-account-btn"
+                (click)="openDeleteConfirmModal()"
+                role="menuitem"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="action-icon"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>Delete Account</span>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+<!-- Full Diet Preference Modal (Can be opened from popover) -->
+<app-diet-preference-modal
+  [isOpen]="isDietModalOpen()"
+  (close)="closeFullDietModal()"
+></app-diet-preference-modal>
+
+<!-- Delete Account Confirmation Modal -->
+@if (showDeleteConfirmModal()) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirmModal()">
+    <div
+      class="delete-modal-card"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="deleteModalHeading"
+      aria-describedby="deleteModalDescription"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="delete-icon-wrapper" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="warning-trash-icon"
+        >
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          <line x1="10" y1="11" x2="10" y2="17" />
+          <line x1="14" y1="11" x2="14" y2="17" />
+        </svg>
+      </div>
+
+      <h3 id="deleteModalHeading" class="delete-modal-title">Delete Account?</h3>
+      <p id="deleteModalDescription" class="delete-modal-text">
+        Are you sure you want to permanently delete your account? This action cannot be undone. All your dock space profile, reserved username, and settings will be permanently erased.
+      </p>
+
+      @if (deleteErrorMessage()) {
+        <div class="delete-error-banner" role="alert">
+          {{ deleteErrorMessage() }}
+        </div>
+      }
+
+      <div class="delete-modal-actions">
+        <button
+          type="button"
+          class="modal-btn cancel-btn"
+          (click)="closeDeleteConfirmModal()"
+          [disabled]="isDeleting()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="modal-btn confirm-delete-btn"
+          (click)="handleConfirmDeleteAccount()"
+          [disabled]="isDeleting()"
+        >
+          @if (isDeleting()) {
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span>Deleting...</span>
+          } @else {
+            <span>Yes, Delete Account</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

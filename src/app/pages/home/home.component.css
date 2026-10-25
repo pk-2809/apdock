@@ -1,0 +1,402 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 100dvh;
+}
+
+.home-layout {
+  position: relative;
+  flex: 1;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background-color 0.35s ease;
+}
+
+/* ==========================================================================
+   Dreamy Soft Brand Pastel Aura (Matches App Icon Quadrants)
+   Sky Blue, Amber, Mint / Emerald, Coral
+   ========================================================================== */
+.pastel-aura {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.aura-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(85px);
+  will-change: transform;
+  animation: blobFloat 9s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.blob-sky {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, var(--brand-sky) 0%, transparent 70%);
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.18;
+}
+
+.blob-amber {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, var(--quad-amber) 0%, transparent 70%);
+  top: 35%;
+  left: 10%;
+  opacity: 0.14;
+  animation-duration: 8s;
+  animation-delay: -2s;
+}
+
+.blob-emerald {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, var(--quad-emerald) 0%, transparent 70%);
+  top: 35%;
+  right: 10%;
+  opacity: 0.14;
+  animation-duration: 10s;
+  animation-delay: -4s;
+}
+
+.blob-coral {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, var(--quad-coral) 0%, transparent 70%);
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.15;
+  animation-duration: 11s;
+  animation-delay: -6s;
+}
+
+@keyframes blobFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(10px, -12px) scale(1.06);
+  }
+  100% {
+    transform: translate(-8px, 10px) scale(0.95);
+  }
+}
+
+/* ==========================================================================
+   Main Content Layout (Name/Date at Top, Cards Aligned at Bottom)
+   ========================================================================== */
+.home-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px calc(var(--sab) + 32px) 20px;
+  box-sizing: border-box;
+}
+
+.home-container {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Top: Greeting, Bottom: Cards */
+  gap: 24px;
+}
+
+/* ==========================================================================
+   User Greeting Section (Top Aligned)
+   ========================================================================== */
+.user-greeting-section {
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.4s var(--spring-apple) both;
+  padding: 2px 2px 0 2px;
+  gap: 6px;
+  overflow: visible;
+}
+
+.greeting-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.greeting-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-sky);
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.greeting-title {
+  margin: 0;
+  line-height: 1.15;
+  overflow: visible;
+}
+
+/* Adaptive Greeting Name (White in Dark Mode, Vibrant Brand Gradient in Light Mode) */
+.gradient-name {
+  font-family: var(--font-sans);
+  font-size: clamp(44px, 13vw, 62px);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: var(--greeting-name-color);
+  -webkit-text-fill-color: var(--greeting-name-fill);
+  background: var(--greeting-name-bg);
+  -webkit-background-clip: var(--greeting-name-clip);
+  background-clip: var(--greeting-name-clip);
+  display: inline-block;
+  filter: var(--greeting-name-shadow);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  padding: 0.04em 0.16em 0.16em 0.02em;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.date-badge {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Apple-Style Tinted Glass Squircle Cards Grid (Bottom Aligned)
+   ========================================================================== */
+.cards-section {
+  width: 100%;
+  margin-top: auto; /* Aligns cards directly to the bottom */
+}
+
+.cards-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.squircle-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3.6;
+  min-height: 148px;
+  border-radius: 26px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 12px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.24s var(--spring-apple), box-shadow 0.24s var(--spring-apple), border-color 0.24s ease, filter 0.24s ease;
+  outline: none;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Card 1: Diet Plan (Mint / Emerald Tinted Glass)
+   -------------------------------------------------------------------------- */
+.card-diet {
+  background: var(--card-diet-bg);
+  border: 1px solid var(--card-diet-border);
+  box-shadow: var(--card-diet-shadow);
+}
+
+/* --------------------------------------------------------------------------
+   Card 2: Gym Schedule (Coral / Amber Tinted Glass)
+   -------------------------------------------------------------------------- */
+.card-gym {
+  background: var(--card-gym-bg);
+  border: 1px solid var(--card-gym-border);
+  box-shadow: var(--card-gym-shadow);
+}
+
+/* Desktop Hover Only (Prevents sticky hover on touch devices) */
+@media (hover: hover) and (pointer: fine) {
+  .card-diet:hover {
+    transform: translateY(-4px);
+    border-color: rgba(48, 209, 88, 0.42);
+    box-shadow: var(--card-diet-hover-shadow);
+  }
+
+  .card-gym:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 69, 58, 0.42);
+    box-shadow: var(--card-gym-hover-shadow);
+  }
+}
+
+/* Active / On-Click Tactile Press Physics */
+.squircle-card:active {
+  transform: scale(0.965);
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, filter 0.08s ease-out;
+  filter: brightness(0.98);
+}
+
+.card-diet:active {
+  box-shadow: var(--card-diet-active-shadow);
+  border-color: rgba(48, 209, 88, 0.45);
+}
+
+.card-gym:active {
+  box-shadow: var(--card-gym-active-shadow);
+  border-color: rgba(255, 69, 58, 0.45);
+}
+
+.squircle-card:active .card-icon-bubble {
+  transform: scale(0.92);
+  transition: transform 0.08s ease-out;
+}
+
+.squircle-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.squircle-card:focus-visible {
+  outline: 2px solid var(--brand-sky);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Luminous Gradient Icon Bubbles
+   -------------------------------------------------------------------------- */
+.card-icon-bubble {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  transition: transform 0.28s var(--spring-pop), box-shadow 0.28s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Inner Gloss Sheen */
+.card-icon-bubble::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
+}
+
+.diet-bubble {
+  background: linear-gradient(135deg, var(--quad-emerald) 0%, var(--brand-cyan) 100%);
+  box-shadow: 0 10px 24px -3px rgba(48, 209, 88, 0.45), 0 2px 6px rgba(0, 198, 255, 0.25);
+}
+
+.gym-bubble {
+  background: linear-gradient(135deg, var(--quad-coral) 0%, var(--quad-amber) 100%);
+  box-shadow: 0 10px 24px -3px rgba(255, 69, 58, 0.45), 0 2px 6px rgba(255, 159, 10, 0.25);
+}
+
+.squircle-card:hover .card-icon-bubble {
+  transform: scale(1.1);
+}
+
+.module-svg {
+  width: 26px;
+  height: 26px;
+  stroke: #ffffff;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Card Meta & Typography */
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-label {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.card-sublabel {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   Millisecond Staggered Animations
+   ========================================================================== */
+.anim-stack-1 {
+  animation: stackSlideIn 0.45s var(--spring-apple) both 60ms;
+}
+
+.anim-stack-2 {
+  animation: stackSlideIn 0.45s var(--spring-apple) both 160ms;
+}
+
+@keyframes stackSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,103 @@
+<div class="home-layout">
+  <!-- Reusable App Header -->
+  <app-header></app-header>
+
+  <!-- Dreamy Soft Brand Pastel Aura (Matching App Logo Colors: Sky Blue, Amber, Mint, Coral) -->
+  <div class="pastel-aura" aria-hidden="true">
+    <div class="aura-blob blob-sky"></div>
+    <div class="aura-blob blob-amber"></div>
+    <div class="aura-blob blob-emerald"></div>
+    <div class="aura-blob blob-coral"></div>
+  </div>
+
+  <!-- Main Mobile Lifestyle Canvas -->
+  <main class="home-main" role="main">
+    <div class="home-container">
+      
+      <!-- Top Section: User Greeting & Date Bar -->
+      <section class="user-greeting-section" aria-labelledby="welcomeHeading">
+        <div class="greeting-top-bar">
+          <span class="greeting-eyebrow">{{ timeGreeting() }}</span>
+          <span class="date-badge">{{ formattedDate() }}</span>
+        </div>
+        <h1 id="welcomeHeading" class="greeting-title">
+          <span class="gradient-name">{{ auth.userDisplayName() || 'Welcome' }}</span>
+        </h1>
+      </section>
+
+      <!-- Bottom Section: Apple-Style Tinted Glass Squircle Cards Grid -->
+      <section class="cards-section" aria-label="Lifestyle modules">
+        <div class="cards-grid">
+          
+          <!-- Card 1: Diet Plan (Mint / Emerald Tinted Glass) -->
+          <button
+            type="button"
+            id="dietPlanCard"
+            class="squircle-card square-card card-diet anim-stack-1"
+            (click)="onCardClick('diet')"
+          >
+            <div class="card-icon-bubble diet-bubble" aria-hidden="true">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="module-svg"
+              >
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
+            </div>
+            <div class="card-meta">
+              <span class="card-label">Diet Plan</span>
+              <span class="card-sublabel">Nutrition & Meals</span>
+            </div>
+          </button>
+
+          <!-- Card 2: Gym Schedule (Coral / Amber Tinted Glass) -->
+          <button
+            type="button"
+            id="gymScheduleCard"
+            class="squircle-card square-card card-gym anim-stack-2"
+            (click)="onCardClick('gym')"
+          >
+            <div class="card-icon-bubble gym-bubble" aria-hidden="true">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="module-svg"
+              >
+                <path d="M6.5 12h11" />
+                <rect x="4" y="6" width="2.5" height="12" rx="1.2" />
+                <rect x="1.5" y="8" width="2.5" height="8" rx="1" opacity="0.75" />
+                <rect x="17.5" y="6" width="2.5" height="12" rx="1.2" />
+                <rect x="20" y="8" width="2.5" height="8" rx="1" opacity="0.75" />
+              </svg>
+            </div>
+            <div class="card-meta">
+              <span class="card-label">Gym Schedule</span>
+              <span class="card-sublabel">Workout Routine</span>
+            </div>
+          </button>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Diet Preference Modal Prompt on Diet Card Click -->
+  <app-diet-preference-modal
+    [isOpen]="isDietModalOpen()"
+    (close)="closeDietModal()"
+    (saved)="onDietPreferenceSaved()"
+  ></app-diet-preference-modal>
+</div>

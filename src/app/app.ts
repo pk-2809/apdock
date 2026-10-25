@@ -1,7 +1,9 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { SplashScreenComponent } from './components/splash-screen/splash-screen.component';
+import { ThemeService, ThemeMode } from './core/services/theme.service';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,24 +13,14 @@ import { SplashScreenComponent } from './components/splash-screen/splash-screen.
   styleUrl: './app.css'
 })
 export class App {
+  readonly auth = inject(AuthService);
+  private readonly themeService = inject(ThemeService);
+
   readonly showSplash = signal<boolean>(true);
-  readonly currentTheme = signal<'system' | 'light' | 'dark'>('system');
+  readonly currentTheme = this.themeService.currentTheme;
 
-  constructor() {
-    effect(() => {
-      const mode = this.currentTheme();
-      if (typeof document !== 'undefined') {
-        if (mode === 'system') {
-          document.documentElement.removeAttribute('data-theme');
-        } else {
-          document.documentElement.setAttribute('data-theme', mode);
-        }
-      }
-    });
-  }
-
-  setTheme(mode: 'light' | 'dark' | 'system'): void {
-    this.currentTheme.set(mode);
+  setTheme(mode: ThemeMode): void {
+    this.themeService.setTheme(mode);
   }
 
   onSplashFinished(): void {

@@ -48,23 +48,43 @@
   --dot-emerald-shadow: 0 4px 12px rgba(48, 209, 88, 0.45);
   --dot-violet-shadow: 0 4px 12px rgba(94, 92, 230, 0.45);
   --dot-coral-shadow: 0 4px 12px rgba(255, 69, 58, 0.45);
+
+  /* Greeting Name Display (Light Mode Default: Signature Rich Brand Gradient) */
+  --greeting-name-color: transparent;
+  --greeting-name-fill: transparent;
+  --greeting-name-bg: linear-gradient(135deg, var(--brand-sky) 0%, var(--quad-violet) 45%, var(--quad-coral) 100%);
+  --greeting-name-clip: text;
+  --greeting-name-shadow: drop-shadow(0 4px 18px rgba(0, 132, 255, 0.22));
+
+  /* Lifestyle Module Card Tokens (Light Mode Default) */
+  --card-diet-bg: linear-gradient(160deg, rgba(236, 253, 245, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%);
+  --card-diet-border: rgba(48, 209, 88, 0.28);
+  --card-diet-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --card-diet-hover-shadow: 0 8px 22px -4px rgba(16, 185, 129, 0.16), 0 3px 8px -2px rgba(15, 23, 42, 0.06);
+  --card-diet-active-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(48, 209, 88, 0.25);
+
+  --card-gym-bg: linear-gradient(160deg, rgba(255, 241, 240, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%);
+  --card-gym-border: rgba(255, 69, 58, 0.28);
+  --card-gym-shadow: 0 4px 16px -2px rgba(255, 69, 58, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --card-gym-hover-shadow: 0 8px 22px -4px rgba(255, 69, 58, 0.16), 0 3px 8px -2px rgba(15, 23, 42, 0.06);
+  --card-gym-active-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(255, 69, 58, 0.25);
 }
 
 /* System Dark Mode (Automatic when preferred) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg-deep: #070a12;
-    --bg-surface: #0e1220;
-    --bg-card: rgba(255, 255, 255, 0.03);
-    --border-card: rgba(255, 255, 255, 0.08);
-    --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
-    --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.72);
-    --text-muted: rgba(255, 255, 255, 0.44);
-    --btn-bg: rgba(255, 255, 255, 0.08);
-    --btn-border: rgba(255, 255, 255, 0.16);
-    --btn-color: #ffffff;
-    --btn-hover-bg: rgba(255, 255, 255, 0.14);
+    --bg-deep: #080b13;
+    --bg-surface: #0f1422;
+    --bg-card: rgba(20, 27, 44, 0.72);
+    --border-card: rgba(255, 255, 255, 0.09);
+    --card-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc;
+    --text-secondary: rgba(248, 250, 252, 0.75);
+    --text-muted: rgba(248, 250, 252, 0.48);
+    --btn-bg: rgba(255, 255, 255, 0.06);
+    --btn-border: rgba(255, 255, 255, 0.11);
+    --btn-color: #f8fafc;
+    --btn-hover-bg: rgba(255, 255, 255, 0.11);
 
     --splash-bg: #070a12;
     --splash-title-color: #ffffff;
@@ -77,23 +97,43 @@
     --dot-emerald-shadow: 0 0 10px rgba(48, 209, 88, 0.75);
     --dot-violet-shadow: 0 0 10px rgba(94, 92, 230, 0.75);
     --dot-coral-shadow: 0 0 10px rgba(255, 69, 58, 0.75);
+
+    /* Greeting Name Display (Dark Mode: Crisp Luminous White) */
+    --greeting-name-color: #ffffff;
+    --greeting-name-fill: #ffffff;
+    --greeting-name-bg: none;
+    --greeting-name-clip: border-box;
+    --greeting-name-shadow: drop-shadow(0 2px 16px rgba(255, 255, 255, 0.14));
+
+    /* Lifestyle Module Card Tokens (Dark Mode) */
+    --card-diet-bg: linear-gradient(160deg, rgba(16, 185, 129, 0.13) 0%, rgba(20, 27, 44, 0.78) 55%, rgba(13, 18, 33, 0.88) 100%);
+    --card-diet-border: rgba(48, 209, 88, 0.24);
+    --card-diet-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.4), 0 0 20px -4px rgba(48, 209, 88, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --card-diet-hover-shadow: 0 18px 38px -8px rgba(0, 0, 0, 0.48), 0 0 26px -4px rgba(48, 209, 88, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    --card-diet-active-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    --card-gym-bg: linear-gradient(160deg, rgba(255, 69, 58, 0.13) 0%, rgba(20, 27, 44, 0.78) 55%, rgba(13, 18, 33, 0.88) 100%);
+    --card-gym-border: rgba(255, 69, 58, 0.24);
+    --card-gym-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.4), 0 0 20px -4px rgba(255, 69, 58, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --card-gym-hover-shadow: 0 18px 38px -8px rgba(0, 0, 0, 0.48), 0 0 26px -4px rgba(255, 69, 58, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    --card-gym-active-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 }
 
 /* Explicit Dark Mode */
 [data-theme='dark'] {
-  --bg-deep: #070a12;
-  --bg-surface: #0e1220;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --border-card: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.72);
-  --text-muted: rgba(255, 255, 255, 0.44);
-  --btn-bg: rgba(255, 255, 255, 0.08);
-  --btn-border: rgba(255, 255, 255, 0.16);
-  --btn-color: #ffffff;
-  --btn-hover-bg: rgba(255, 255, 255, 0.14);
+  --bg-deep: #080b13;
+  --bg-surface: #0f1422;
+  --bg-card: rgba(20, 27, 44, 0.72);
+  --border-card: rgba(255, 255, 255, 0.09);
+  --card-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: rgba(248, 250, 252, 0.75);
+  --text-muted: rgba(248, 250, 252, 0.48);
+  --btn-bg: rgba(255, 255, 255, 0.06);
+  --btn-border: rgba(255, 255, 255, 0.11);
+  --btn-color: #f8fafc;
+  --btn-hover-bg: rgba(255, 255, 255, 0.11);
 
   --splash-bg: #070a12;
   --splash-title-color: #ffffff;
@@ -106,6 +146,26 @@
   --dot-emerald-shadow: 0 0 10px rgba(48, 209, 88, 0.75);
   --dot-violet-shadow: 0 0 10px rgba(94, 92, 230, 0.75);
   --dot-coral-shadow: 0 0 10px rgba(255, 69, 58, 0.75);
+
+  /* Greeting Name Display (Explicit Dark Mode) */
+  --greeting-name-color: #ffffff;
+  --greeting-name-fill: #ffffff;
+  --greeting-name-bg: none;
+  --greeting-name-clip: border-box;
+  --greeting-name-shadow: drop-shadow(0 2px 16px rgba(255, 255, 255, 0.14));
+
+  /* Lifestyle Module Card Tokens (Explicit Dark Mode) */
+  --card-diet-bg: linear-gradient(160deg, rgba(16, 185, 129, 0.13) 0%, rgba(20, 27, 44, 0.78) 55%, rgba(13, 18, 33, 0.88) 100%);
+  --card-diet-border: rgba(48, 209, 88, 0.24);
+  --card-diet-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.4), 0 0 20px -4px rgba(48, 209, 88, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --card-diet-hover-shadow: 0 18px 38px -8px rgba(0, 0, 0, 0.48), 0 0 26px -4px rgba(48, 209, 88, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --card-diet-active-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --card-gym-bg: linear-gradient(160deg, rgba(255, 69, 58, 0.13) 0%, rgba(20, 27, 44, 0.78) 55%, rgba(13, 18, 33, 0.88) 100%);
+  --card-gym-border: rgba(255, 69, 58, 0.24);
+  --card-gym-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.4), 0 0 20px -4px rgba(255, 69, 58, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --card-gym-hover-shadow: 0 18px 38px -8px rgba(0, 0, 0, 0.48), 0 0 26px -4px rgba(255, 69, 58, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --card-gym-active-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Explicit Light Mode */
@@ -134,6 +194,26 @@
   --dot-emerald-shadow: 0 4px 12px rgba(48, 209, 88, 0.45);
   --dot-violet-shadow: 0 4px 12px rgba(94, 92, 230, 0.45);
   --dot-coral-shadow: 0 4px 12px rgba(255, 69, 58, 0.45);
+
+  /* Greeting Name Display (Explicit Light Mode: Signature Rich Brand Gradient) */
+  --greeting-name-color: transparent;
+  --greeting-name-fill: transparent;
+  --greeting-name-bg: linear-gradient(135deg, var(--brand-sky) 0%, var(--quad-violet) 45%, var(--quad-coral) 100%);
+  --greeting-name-clip: text;
+  --greeting-name-shadow: drop-shadow(0 4px 18px rgba(0, 132, 255, 0.22));
+
+  /* Lifestyle Module Card Tokens (Explicit Light Mode) */
+  --card-diet-bg: linear-gradient(160deg, rgba(236, 253, 245, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%);
+  --card-diet-border: rgba(48, 209, 88, 0.28);
+  --card-diet-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --card-diet-hover-shadow: 0 8px 22px -4px rgba(16, 185, 129, 0.16), 0 3px 8px -2px rgba(15, 23, 42, 0.06);
+  --card-diet-active-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(48, 209, 88, 0.25);
+
+  --card-gym-bg: linear-gradient(160deg, rgba(255, 241, 240, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%);
+  --card-gym-border: rgba(255, 69, 58, 0.28);
+  --card-gym-shadow: 0 4px 16px -2px rgba(255, 69, 58, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --card-gym-hover-shadow: 0 8px 22px -4px rgba(255, 69, 58, 0.16), 0 3px 8px -2px rgba(15, 23, 42, 0.06);
+  --card-gym-active-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(255, 69, 58, 0.25);
 }
 
 *,
@@ -149,12 +229,13 @@
 html,
 body {
   width: 100%;
-  height: 100%;
   min-height: 100dvh;
   background-color: var(--bg-deep);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -169,4 +250,54 @@ button {
   cursor: pointer;
   outline: none;
   touch-action: manipulation;
+}
+
+/* ==========================================================================
+   Home Greeting Name & Module Card Adaptive Rules (Global, Non-scoped)
+   ========================================================================== */
+[data-theme='light'] .gradient-name {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: linear-gradient(135deg, var(--brand-sky) 0%, var(--quad-violet) 45%, var(--quad-coral) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 4px 18px rgba(0, 132, 255, 0.22)) !important;
+}
+
+[data-theme='light'] .card-diet {
+  background: linear-gradient(160deg, rgba(236, 253, 245, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%) !important;
+  border: 1px solid rgba(48, 209, 88, 0.28) !important;
+}
+
+[data-theme='light'] .card-gym {
+  background: linear-gradient(160deg, rgba(255, 241, 240, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%) !important;
+  border: 1px solid rgba(255, 69, 58, 0.28) !important;
+}
+
+[data-theme='dark'] .gradient-name {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: none !important;
+  filter: drop-shadow(0 2px 16px rgba(255, 255, 255, 0.14)) !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .gradient-name {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    background: linear-gradient(135deg, var(--brand-sky) 0%, var(--quad-violet) 45%, var(--quad-coral) 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    filter: drop-shadow(0 4px 18px rgba(0, 132, 255, 0.22)) !important;
+  }
+
+  :root:not([data-theme='dark']) .card-diet {
+    background: linear-gradient(160deg, rgba(236, 253, 245, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%) !important;
+    border: 1px solid rgba(48, 209, 88, 0.28) !important;
+  }
+
+  :root:not([data-theme='dark']) .card-gym {
+    background: linear-gradient(160deg, rgba(255, 241, 240, 0.95) 0%, rgba(255, 255, 255, 0.98) 60%) !important;
+    border: 1px solid rgba(255, 69, 58, 0.28) !important;
+  }
 }

@@ -1,0 +1,38 @@
+<div class="diet-layout">
+  <!-- Reusable App Header with Diet Preference Popover in header -->
+  <app-header></app-header>
+
+  <!-- Ambient Brand Aura Blobs -->
+  <div class="diet-aura" aria-hidden="true">
+    <div class="aura-blob blob-emerald"></div>
+    <div class="aura-blob blob-cyan"></div>
+  </div>
+
+  <main class="diet-main" role="main">
+    <div class="diet-container">
+      <!-- Minimal Navigation: Back to Home -->
+      <div class="diet-top-nav">
+        <button
+          type="button"
+          class="nav-back-btn"
+          (click)="goBack()"
+          aria-label="Back to home screen"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="back-svg"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          <span class="back-text">Home</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

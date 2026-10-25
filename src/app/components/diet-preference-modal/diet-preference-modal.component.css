@@ -1,0 +1,421 @@
+/* ==========================================================================
+   Diet Preference Modal (Clean Minimalist Luxury UI)
+   ========================================================================== */
+
+.diet-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(4, 7, 14, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: flex-end; /* Bottom sheet on mobile */
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
+  animation: overlayFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (min-width: 640px) {
+  .diet-modal-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.diet-modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0f1422;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  padding: 24px 20px calc(var(--sab, 0px) + 24px) 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+[data-theme='light'] .diet-modal-card {
+  background: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+@media (min-width: 640px) {
+  .diet-modal-card {
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    padding: 28px 24px;
+    animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  [data-theme='light'] .diet-modal-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 750;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.modal-subtext {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.modal-close-btn:hover {
+  background: var(--btn-hover-bg);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+.modal-close-btn:active {
+  transform: scale(0.94);
+}
+
+.close-svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Sections */
+.pref-section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.section-heading {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Tiles Grids */
+.tiles-row {
+  display: grid;
+  gap: 10px;
+}
+
+.tiles-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.tiles-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Tactile Minimal Tiles */
+.pref-tile {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 8px;
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  outline: none !important;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+  box-sizing: border-box;
+  text-align: center;
+  position: relative;
+}
+
+[data-theme='light'] .pref-tile {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pref-tile:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='light'] .pref-tile:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+.pref-tile:active {
+  transform: scale(0.96);
+}
+
+.tile-icon-wrap {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease;
+}
+
+.tile-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tile-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.2;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: color 0.18s ease, font-weight 0.18s ease;
+}
+
+/* Active Selected States */
+.pref-tile.active .tile-label {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.pref-tile.active .tile-icon-wrap {
+  transform: scale(1.08);
+}
+
+/* Dark Mode Category Highlights */
+.pref-tile.goal-loss.active {
+  border-color: #00c6ff;
+  background: linear-gradient(145deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 132, 255, 0.05) 100%);
+  box-shadow: 0 0 20px -3px rgba(0, 198, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.pref-tile.goal-loss.active .loss-icon {
+  color: #00c6ff;
+}
+
+.pref-tile.goal-gain.active {
+  border-color: #ff9f0a;
+  background: linear-gradient(145deg, rgba(255, 159, 10, 0.15) 0%, rgba(255, 115, 0, 0.05) 100%);
+  box-shadow: 0 0 20px -3px rgba(255, 159, 10, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.pref-tile.goal-gain.active .gain-icon {
+  color: #ff9f0a;
+}
+
+.pref-tile.diet-veg.active {
+  border-color: #30d158;
+  background: linear-gradient(145deg, rgba(48, 209, 88, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  box-shadow: 0 0 20px -3px rgba(48, 209, 88, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.pref-tile.diet-veg.active .veg-icon {
+  color: #30d158;
+}
+
+.pref-tile.diet-nonveg.active {
+  border-color: #ff453a;
+  background: linear-gradient(145deg, rgba(255, 69, 58, 0.15) 0%, rgba(244, 63, 94, 0.05) 100%);
+  box-shadow: 0 0 20px -3px rgba(255, 69, 58, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.pref-tile.diet-nonveg.active .nonveg-icon {
+  color: #ff453a;
+}
+
+.pref-tile.diet-both.active {
+  border-color: #00c6ff;
+  background: linear-gradient(145deg, rgba(0, 198, 255, 0.15) 0%, rgba(48, 209, 88, 0.07) 100%);
+  box-shadow: 0 0 20px -3px rgba(0, 198, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.pref-tile.diet-both.active .both-icon {
+  color: #00c6ff;
+}
+
+/* Light Mode Category Highlights */
+[data-theme='light'] .pref-tile.goal-loss.active {
+  border-color: #0084ff;
+  background: linear-gradient(145deg, rgba(0, 132, 255, 0.1) 0%, rgba(0, 198, 255, 0.03) 100%);
+  box-shadow: 0 4px 16px -2px rgba(0, 132, 255, 0.18);
+}
+[data-theme='light'] .pref-tile.goal-loss.active .loss-icon {
+  color: #0084ff;
+}
+
+[data-theme='light'] .pref-tile.goal-gain.active {
+  border-color: #e08300;
+  background: linear-gradient(145deg, rgba(255, 159, 10, 0.1) 0%, rgba(255, 115, 0, 0.03) 100%);
+  box-shadow: 0 4px 16px -2px rgba(255, 159, 10, 0.18);
+}
+[data-theme='light'] .pref-tile.goal-gain.active .gain-icon {
+  color: #e08300;
+}
+
+[data-theme='light'] .pref-tile.diet-veg.active {
+  border-color: #28a745;
+  background: linear-gradient(145deg, rgba(48, 209, 88, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%);
+  box-shadow: 0 4px 16px -2px rgba(48, 209, 88, 0.18);
+}
+[data-theme='light'] .pref-tile.diet-veg.active .veg-icon {
+  color: #28a745;
+}
+
+[data-theme='light'] .pref-tile.diet-nonveg.active {
+  border-color: #e03131;
+  background: linear-gradient(145deg, rgba(255, 69, 58, 0.1) 0%, rgba(244, 63, 94, 0.03) 100%);
+  box-shadow: 0 4px 16px -2px rgba(255, 69, 58, 0.18);
+}
+[data-theme='light'] .pref-tile.diet-nonveg.active .nonveg-icon {
+  color: #e03131;
+}
+
+[data-theme='light'] .pref-tile.diet-both.active {
+  border-color: #0084ff;
+  background: linear-gradient(145deg, rgba(0, 132, 255, 0.1) 0%, rgba(48, 209, 88, 0.05) 100%);
+  box-shadow: 0 4px 16px -2px rgba(0, 132, 255, 0.18);
+}
+[data-theme='light'] .pref-tile.diet-both.active .both-icon {
+  color: #0084ff;
+}
+
+/* Minimal Continue Button */
+.cta-continue-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #0084ff 100%);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -4px rgba(0, 132, 255, 0.35);
+  border: none;
+  outline: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 4px;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.cta-continue-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(0, 132, 255, 0.45);
+}
+
+.cta-continue-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.cta-continue-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-spinner-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
