@@ -97,3 +97,73 @@ Captured on fresh cold boot (unauthenticated first visit):
 | 21 | `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?...` | XHR | 381 | 200 | Firebase Auth project configuration handshake |
 | 22 | `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?...` | Preflight | 0 | 200 | CORS Preflight for Identity Toolkit handshake |
 | 23 | `/app-icon.png` (Cached/Repeated) | Image | 751,715 | 200 | Repeated browser request for icon |
+
+---
+
+## 6. Phase C Edge CDN Caching Header Verification (`curl -I` on Preview Channel)
+
+Deployed to Firebase Hosting preview channel `https://apdock--pwa-test-71y1j6zy.web.app`:
+
+### 1. HTML Root (`index.html`)
+```http
+HTTP/2 200 
+cache-control: no-cache, no-store, must-revalidate
+content-type: text/html; charset=utf-8
+```
+
+### 2. Angular Service Worker Manifest (`ngsw.json`)
+```http
+HTTP/2 200 
+cache-control: no-cache, no-store, must-revalidate
+content-type: application/json
+```
+
+### 3. Service Worker Script (`ngsw-worker.js`)
+```http
+HTTP/2 200 
+cache-control: no-cache, no-store, must-revalidate
+content-type: text/javascript; charset=utf-8
+```
+
+### 4. Safety Worker Script (`safety-worker.js`)
+```http
+HTTP/2 200 
+cache-control: no-cache, no-store, must-revalidate
+content-type: text/javascript; charset=utf-8
+```
+
+### 5. Web App Manifest (`manifest.webmanifest`)
+```http
+HTTP/2 200 
+cache-control: no-cache, no-store, must-revalidate
+content-type: application/manifest+json
+```
+
+### 6. Hashed JavaScript Bundle (`main-CX5EM2AX.js`)
+```http
+HTTP/2 200 
+cache-control: public, max-age=31536000, immutable
+content-type: text/javascript; charset=utf-8
+```
+
+### 7. Hashed Stylesheet (`styles-CPAPEJUO.css`)
+```http
+HTTP/2 200 
+cache-control: public, max-age=31536000, immutable
+content-type: text/css; charset=utf-8
+```
+
+### 8. Unhashed Application Icon (`app-icon.png`)
+```http
+HTTP/2 200 
+cache-control: public, max-age=86400, must-revalidate
+content-type: image/png
+```
+
+### 9. Unhashed Favicon (`favicon.ico`)
+```http
+HTTP/2 200 
+cache-control: public, max-age=86400, must-revalidate
+content-type: image/x-icon
+```
+
