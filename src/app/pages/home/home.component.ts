@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -6,6 +6,7 @@ import { DietPreferenceModalComponent } from '../../components/diet-preference-m
 import { AuthService } from '../../core/services/auth.service';
 import { DietService } from '../../core/services/diet.service';
 import { InstallService } from '../../core/services/install.service';
+import { PwaUpdateService } from '../../core/services/pwa-update.service';
 
 export type LifestyleModule = 'diet' | 'gym';
 
@@ -21,12 +22,28 @@ export class HomeComponent {
   readonly dietService = inject(DietService);
   readonly installService = inject(InstallService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly pwaUpdate = inject(PwaUpdateService);
 
   readonly isDietModalOpen = signal<boolean>(false);
+  readonly now = signal<Date>(new Date());
 
-  // Dynamic contextual greetings
+  constructor() {
+    if (typeof document !== 'undefined') {
+      const onVisChange = (): void => {
+        if (document.visibilityState === 'visible') {
+          this.now.set(new Date());
+          this.auth.flushPendingDietSync();
+        }
+      };
+      document.addEventListener('visibilitychange', onVisChange);
+      this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', onVisChange));
+    }
+  }
+
+  // Dynamic contextual greetings recomputed on resume
   readonly timeGreeting = computed(() => {
-    const hour = new Date().getHours();
+    const hour = this.now().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
@@ -34,7 +51,7 @@ export class HomeComponent {
 
   readonly formattedDate = computed(() => {
     const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
-    return new Date().toLocaleDateString('en-US', options);
+    return this.now().toLocaleDateString('en-US', options);
   });
 
   onCardClick(module: LifestyleModule): void {
@@ -45,10 +62,12 @@ export class HomeComponent {
 
   closeDietModal(): void {
     this.isDietModalOpen.set(false);
+    this.pwaUpdate.notifyOverlayClosed();
   }
 
   onDietPreferenceSaved(): void {
     this.isDietModalOpen.set(false);
+    this.pwaUpdate.notifyOverlayClosed();
     this.router.navigate(['/diet']);
   }
 }

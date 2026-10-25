@@ -6,7 +6,8 @@ import {
   OnInit,
   AfterViewInit,
   viewChild,
-  ElementRef
+  ElementRef,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -30,6 +31,7 @@ import {
   AdditionalRecipe
 } from '../../core/services/diet.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PwaUpdateService } from '../../core/services/pwa-update.service';
 
 export type SlotFilter = 'breakfast' | 'lunch' | 'dinner';
 export type VeggiesFilterMode = 'current_meal' | 'all_day';
@@ -79,6 +81,8 @@ export class DietComponent implements OnInit, AfterViewInit {
   readonly dietService = inject(DietService);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly pwaUpdate = inject(PwaUpdateService);
 
   // Reference to week scroll track for centered smooth scroll
   readonly weekScrollContainer = viewChild<ElementRef<HTMLElement>>('weekScrollContainer');
@@ -100,7 +104,7 @@ export class DietComponent implements OnInit, AfterViewInit {
   // Today's day name & circular week items (5 cycles: -2, -1, 0, 1, 2 = 35 days)
   // Sequence: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
   // Sunday is ALWAYS immediately before Monday!
-  readonly todayDayName: DayOfWeek = this.dietService.getCurrentDayName();
+  todayDayName: DayOfWeek = this.dietService.getCurrentDayName();
   readonly circularDays = signal<CircularDayItem[]>(this.generateCircularDays());
 
   // Middle cycle (cycle 0) today index: 14 + currentDayIndex
@@ -204,6 +208,35 @@ export class DietComponent implements OnInit, AfterViewInit {
     // Cache initial day data
     const initialKey = this.getCacheKey(this.todayDayName);
     this.cachedDayPlans.set(initialKey, this.activeDayPlan());
+
+    // Resume handling on visibilitychange to visible
+    if (typeof document !== 'undefined') {
+      const onVisChange = (): void => {
+        if (document.visibilityState === 'visible') {
+          this.onResume();
+        }
+      };
+      document.addEventListener('visibilitychange', onVisChange);
+      this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', onVisChange));
+    }
+  }
+
+  onResume(): void {
+    const freshDayName = this.dietService.getCurrentDayName();
+    const dayChanged = freshDayName !== this.todayDayName;
+    if (dayChanged) {
+      this.todayDayName = freshDayName;
+      this.circularDays.set(this.generateCircularDays());
+      this.selectedDay.set(freshDayName);
+      this.selectedGlobalIndex.set(this.getInitialTodayGlobalIndex());
+      this.centerChipByIndex(this.selectedGlobalIndex(), true);
+    }
+    const freshSlot = this.dietService.getCurrentTimeSlot();
+    this.currentTimeSlot.set(freshSlot);
+    // Reload date-scoped veggies
+    this.checkedVeggies.set(this.loadCheckedVeggies());
+    // Attempt outbox flush if online
+    this.auth.flushPendingDietSync();
   }
 
   ngAfterViewInit(): void {
@@ -382,6 +415,8 @@ export class DietComponent implements OnInit, AfterViewInit {
       const updated = Array.from(set);
       try {
         if (typeof localStorage !== 'undefined') {
+          const dateKey = this.getChecklistDateKey();
+          localStorage.setItem(`apdock_checked_veggies_${dateKey}`, JSON.stringify(updated));
           localStorage.setItem('apdock_checked_veggies', JSON.stringify(updated));
         }
       } catch {}
@@ -422,6 +457,7 @@ export class DietComponent implements OnInit, AfterViewInit {
 
   closeRecipeModal(): void {
     this.activeRecipeModal.set(null);
+    this.pwaUpdate.notifyOverlayClosed();
   }
 
   openDietModal(): void {
@@ -430,10 +466,12 @@ export class DietComponent implements OnInit, AfterViewInit {
 
   closeDietModal(): void {
     this.isDietModalOpen.set(false);
+    this.pwaUpdate.notifyOverlayClosed();
   }
 
   onDietPreferenceSaved(): void {
     this.isDietModalOpen.set(false);
+    this.pwaUpdate.notifyOverlayClosed();
     this.cachedDayPlans.clear();
     this.selectDay(this.selectedDay());
   }
@@ -469,6 +507,7 @@ export class DietComponent implements OnInit, AfterViewInit {
     this.editingMeal.set(null);
     this.editingAdditionalRecipe.set(null);
     this.modalMode.set('add');
+    this.pwaUpdate.notifyOverlayClosed();
   }
 
   onRecipeAdded(event: AddedRecipeEvent): void {
@@ -616,9 +655,17 @@ export class DietComponent implements OnInit, AfterViewInit {
     return {};
   }
 
+  private getChecklistDateKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}_${String(now.getDate()).padStart(2, '0')}`;
+  }
+
   private loadCheckedVeggies(): string[] {
     try {
       if (typeof localStorage !== 'undefined') {
+        const dateKey = this.getChecklistDateKey();
+        const dateScoped = localStorage.getItem(`apdock_checked_veggies_${dateKey}`);
+        if (dateScoped) return JSON.parse(dateScoped);
         const raw = localStorage.getItem('apdock_checked_veggies');
         if (raw) return JSON.parse(raw);
       }

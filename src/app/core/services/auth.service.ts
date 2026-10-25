@@ -248,12 +248,37 @@ export class AuthService {
     onAuthStateChanged(this.auth, async (user) => {
       this.currentUser.set(user);
       if (user) {
-        await this.fetchOrSyncUserProfile(user);
+        // Fast-path: immediately hydrate profile from local cache for instant 0ms offline boot
+        try {
+          const cached = localStorage.getItem(`apdock_profile_${user.uid}`);
+          if (cached) {
+            this.userProfile.set(JSON.parse(cached));
+            this.isAuthLoading.set(false);
+          }
+        } catch {}
+
+        // Background sync with 4s timeout
+        this.fetchOrSyncUserProfile(user).finally(() => {
+          this.isAuthLoading.set(false);
+        });
+
+        // Flush any pending offline diet preference sync
+        this.flushPendingDietSync();
       } else {
         this.userProfile.set(null);
+        this.isAuthLoading.set(false);
       }
-      this.isAuthLoading.set(false);
     });
+
+    // Offline outbox retry listeners
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      window.addEventListener('online', () => this.flushPendingDietSync());
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.flushPendingDietSync();
+        }
+      });
+    }
   }
 
   /**
@@ -584,7 +609,10 @@ export class AuthService {
       } catch {}
 
       const userRef = doc(this.db, 'users', user.uid);
-      const snap = await getDoc(userRef);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+      );
+      const snap = await Promise.race([getDoc(userRef), timeoutPromise]);
 
       if (snap.exists()) {
         const data = snap.data() as UserProfile;
@@ -699,19 +727,50 @@ export class AuthService {
   async updateDietPreference(preference: unknown): Promise<void> {
     const user = this.currentUser();
     if (!user) return;
+
+    // 1. Immediately update local profile and cache (zero delay, offline safe)
+    const current = this.userProfile();
+    if (current) {
+      const updated = { ...current, dietPreference: preference };
+      this.userProfile.set(updated);
+      try {
+        localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(updated));
+      } catch {}
+    }
+
+    // 2. Write to Firestore Lite; if offline or fails, mark pending in outbox
     try {
       const userRef = doc(this.db, 'users', user.uid);
       await setDoc(userRef, { dietPreference: preference, lastLoginAt: serverTimestamp() }, { merge: true });
-      const current = this.userProfile();
-      if (current) {
-        const updated = { ...current, dietPreference: preference };
-        this.userProfile.set(updated);
-        try {
-          localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(updated));
-        } catch {}
-      }
+      try {
+        localStorage.removeItem('apdock_pending_diet_sync');
+      } catch {}
     } catch (e) {
-      console.warn('Could not update dietPreference in firestore:', e);
+      console.warn('Diet preference cloud sync deferred (offline):', e);
+      try {
+        localStorage.setItem(
+          'apdock_pending_diet_sync',
+          JSON.stringify({ uid: user.uid, preference, timestamp: Date.now() })
+        );
+      } catch {}
+    }
+  }
+
+  async flushPendingDietSync(): Promise<void> {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('apdock_pending_diet_sync');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const user = this.currentUser();
+      if (!user || user.uid !== parsed.uid) return;
+
+      const userRef = doc(this.db, 'users', user.uid);
+      await setDoc(userRef, { dietPreference: parsed.preference, lastLoginAt: serverTimestamp() }, { merge: true });
+      localStorage.removeItem('apdock_pending_diet_sync');
+      console.log('Successfully flushed pending diet preference to cloud');
+    } catch (err) {
+      console.warn('Deferred diet preference sync attempt failed:', err);
     }
   }
 }

@@ -25,6 +25,44 @@
   position: relative;
 }
 
+/* Offline Pill (Zero Layout Shift) */
+.offline-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 149, 0, 0.12);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  color: #ff9500;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeIn 0.25s ease both;
+  z-index: 10;
+}
+
+.offline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff9500;
+  box-shadow: 0 0 6px #ff9500;
+}
+
+@media (max-width: 540px) {
+  .offline-text {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 /* Brand Identity (Left aligned, vertically centered) */
 .header-brand {
   display: flex;

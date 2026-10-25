@@ -23,9 +23,9 @@
   box-sizing: border-box;
   padding: env(safe-area-inset-top, 20px) 24px env(safe-area-inset-bottom, 20px);
   transition:
-    background-color 0.35s ease,
-    opacity 0.42s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+    background-color 0.25s ease,
+    opacity 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .cute-splash-root.is-leaving {

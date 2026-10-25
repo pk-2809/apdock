@@ -27,22 +27,38 @@ export class SplashScreenComponent implements OnInit, OnDestroy {
   private exitTransitionTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
-    // Automatically close splash screen after 2.3 seconds
+    // 1. Skip brand animation on warm starts (sessionStorage flag or SW-controlled resume)
+    const isWarmStart =
+      (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('apdock_splash_shown') === '1') ||
+      (typeof navigator !== 'undefined' && !!navigator.serviceWorker?.controller && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('apdock_splash_shown') === '1');
+
+    if (isWarmStart) {
+      this.finished.emit();
+      return;
+    }
+
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem('apdock_splash_shown', '1');
+      } catch {}
+    }
+
+    // 2. Cold start: keep at most ~1s and never block interactivity
     this.autoCloseTimer = setTimeout(() => {
-      this.dismiss();
-    }, 2300);
+      this.dismiss(false);
+    }, 800);
   }
 
   ngOnDestroy(): void {
     this.clearAllTimers();
   }
 
-  dismiss(): void {
+  dismiss(isUserGesture = false): void {
     if (this.isLeaving()) return;
     this.isLeaving.set(true);
     this.clearAllTimers();
 
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if (isUserGesture && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(18);
       } catch {
@@ -52,7 +68,7 @@ export class SplashScreenComponent implements OnInit, OnDestroy {
 
     this.exitTransitionTimer = setTimeout(() => {
       this.finished.emit();
-    }, 400); // Matches CSS transition duration
+    }, 200); // Fast snappy transition
   }
 
   private clearAllTimers(): void {

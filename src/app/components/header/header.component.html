@@ -10,6 +10,14 @@
       </div>
     </div>
 
+    <!-- Non-blocking Zero-Shift Offline Pill -->
+    @if (!networkService.isOnline()) {
+      <div class="offline-pill" role="status" aria-live="polite">
+        <span class="offline-dot" aria-hidden="true"></span>
+        <span class="offline-text">Offline · changes saved on this device</span>
+      </div>
+    }
+
     <!-- Header Actions: Diet Preference Popover & Settings Button -->
     <div class="header-actions">
       <!-- Diet Preference Button (Only visible when user is inside the Diet module) -->
