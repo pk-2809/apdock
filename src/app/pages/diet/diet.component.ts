@@ -32,6 +32,7 @@ import {
 } from '../../core/services/diet.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PwaUpdateService } from '../../core/services/pwa-update.service';
+import { OverlayHistoryService } from '../../core/services/overlay-history.service';
 
 export type SlotFilter = 'breakfast' | 'lunch' | 'dinner';
 export type VeggiesFilterMode = 'current_meal' | 'all_day';
@@ -83,6 +84,7 @@ export class DietComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pwaUpdate = inject(PwaUpdateService);
+  private readonly overlayHistory = inject(OverlayHistoryService);
 
   // Reference to week scroll track for centered smooth scroll
   readonly weekScrollContainer = viewChild<ElementRef<HTMLElement>>('weekScrollContainer');
@@ -468,23 +470,34 @@ export class DietComponent implements OnInit, AfterViewInit {
 
   openRecipeModal(recipe: AdditionalRecipe): void {
     this.activeRecipeModal.set(recipe);
+    this.overlayHistory.pushOverlay('recipe-sheet', () => {
+      this.activeRecipeModal.set(null);
+      this.pwaUpdate.notifyOverlayClosed();
+    });
   }
 
   closeRecipeModal(): void {
+    this.overlayHistory.popOverlay('recipe-sheet');
     this.activeRecipeModal.set(null);
     this.pwaUpdate.notifyOverlayClosed();
   }
 
   openDietModal(): void {
     this.isDietModalOpen.set(true);
+    this.overlayHistory.pushOverlay('diet-pref-modal', () => {
+      this.isDietModalOpen.set(false);
+      this.pwaUpdate.notifyOverlayClosed();
+    });
   }
 
   closeDietModal(): void {
+    this.overlayHistory.popOverlay('diet-pref-modal');
     this.isDietModalOpen.set(false);
     this.pwaUpdate.notifyOverlayClosed();
   }
 
   onDietPreferenceSaved(): void {
+    this.overlayHistory.popOverlay('diet-pref-modal');
     this.isDietModalOpen.set(false);
     this.pwaUpdate.notifyOverlayClosed();
     this.cachedDayPlans.clear();
@@ -498,6 +511,13 @@ export class DietComponent implements OnInit, AfterViewInit {
     this.addRecipeModalTarget.set(target);
     this.addRecipeModalSlot.set(this.activeSlotFilter());
     this.isAddRecipeModalOpen.set(true);
+    this.overlayHistory.pushOverlay('add-recipe-modal', () => {
+      this.isAddRecipeModalOpen.set(false);
+      this.editingMeal.set(null);
+      this.editingAdditionalRecipe.set(null);
+      this.modalMode.set('add');
+      this.pwaUpdate.notifyOverlayClosed();
+    });
   }
 
   openEditScheduleRecipeModal(dish: MealOption): void {
@@ -506,6 +526,13 @@ export class DietComponent implements OnInit, AfterViewInit {
     this.editingAdditionalRecipe.set(null);
     this.addRecipeModalSlot.set(this.activeSlotFilter());
     this.isAddRecipeModalOpen.set(true);
+    this.overlayHistory.pushOverlay('add-recipe-modal', () => {
+      this.isAddRecipeModalOpen.set(false);
+      this.editingMeal.set(null);
+      this.editingAdditionalRecipe.set(null);
+      this.modalMode.set('add');
+      this.pwaUpdate.notifyOverlayClosed();
+    });
   }
 
   openEditAdditionalRecipeModal(recipe: AdditionalRecipe): void {
@@ -515,9 +542,17 @@ export class DietComponent implements OnInit, AfterViewInit {
     this.editingAdditionalRecipe.set(recipe);
     this.addRecipeModalTarget.set('additional');
     this.isAddRecipeModalOpen.set(true);
+    this.overlayHistory.pushOverlay('add-recipe-modal', () => {
+      this.isAddRecipeModalOpen.set(false);
+      this.editingMeal.set(null);
+      this.editingAdditionalRecipe.set(null);
+      this.modalMode.set('add');
+      this.pwaUpdate.notifyOverlayClosed();
+    });
   }
 
   closeAddRecipeModal(): void {
+    this.overlayHistory.popOverlay('add-recipe-modal');
     this.isAddRecipeModalOpen.set(false);
     this.editingMeal.set(null);
     this.editingAdditionalRecipe.set(null);

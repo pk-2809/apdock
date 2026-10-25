@@ -99,7 +99,9 @@
   /* Centering padding so the active day sits in the exact middle with ample room */
   padding: 0 calc(50% - 31px);
   scrollbar-width: none;
+  overscroll-behavior: contain;
   overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
 }
 
 .week-queue-track::-webkit-scrollbar {

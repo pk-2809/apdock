@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject, DestroyRef } from '@angular/core';
 import { AuthService } from './auth.service';
+import { OverlayHistoryService } from './overlay-history.service';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -12,6 +13,7 @@ interface BeforeInstallPromptEvent extends Event {
 export class InstallService {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly overlayHistory = inject(OverlayHistoryService);
 
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
 
@@ -176,10 +178,14 @@ export class InstallService {
       }
     } else if (this.isIos() && !this.isStandalone()) {
       this.showIosSheet.set(true);
+      this.overlayHistory.pushOverlay('ios-install-sheet', () => {
+        this.showIosSheet.set(false);
+      });
     }
   }
 
   closeIosSheet(): void {
+    this.overlayHistory.popOverlay('ios-install-sheet');
     this.showIosSheet.set(false);
   }
 

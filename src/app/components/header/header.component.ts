@@ -20,6 +20,7 @@ import { PwaUpdateService } from '../../core/services/pwa-update.service';
 import { InstallService } from '../../core/services/install.service';
 import { NetworkService } from '../../core/services/network.service';
 import { DietPreferenceModalComponent } from '../diet-preference-modal/diet-preference-modal.component';
+import { OverlayHistoryService } from '../../core/services/overlay-history.service';
 
 @Component({
   selector: 'app-header',
@@ -35,6 +36,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly pwaUpdate = inject(PwaUpdateService);
   readonly installService = inject(InstallService);
   readonly networkService = inject(NetworkService);
+  private readonly overlayHistory = inject(OverlayHistoryService);
   readonly appVersion = this.pwaUpdate.appVersion;
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
@@ -97,13 +99,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.isMenuOpen.set(false);
+    this.closeMenu();
     if (this.isDietPrefMenuOpen()) {
       this.closeDietPrefMenu();
     } else {
       this.stagedGoal.set(this.currentGoal());
       this.stagedDietType.set(this.currentDietType());
       this.isDietPrefMenuOpen.set(true);
+      this.overlayHistory.pushOverlay('header-diet-pref', () => {
+        this.closeDietPrefMenu();
+      });
     }
   }
 
@@ -111,6 +116,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!this.isDietPrefMenuOpen()) {
       return;
     }
+    this.overlayHistory.popOverlay('header-diet-pref');
     this.isDietPrefMenuOpen.set(false);
 
     // Sync to backend / diet service only on menu close if preferences actually changed
@@ -152,9 +158,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
   openFullDietModal(): void {
     this.closeDietPrefMenu();
     this.isDietModalOpen.set(true);
+    this.overlayHistory.pushOverlay('header-full-diet-modal', () => {
+      this.isDietModalOpen.set(false);
+    });
   }
 
   closeFullDietModal(): void {
+    this.overlayHistory.popOverlay('header-full-diet-modal');
     this.isDietModalOpen.set(false);
   }
 
@@ -163,10 +173,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
     this.closeDietPrefMenu();
-    this.isMenuOpen.update((open) => !open);
+    if (this.isMenuOpen()) {
+      this.closeMenu();
+    } else {
+      this.isMenuOpen.set(true);
+      this.overlayHistory.pushOverlay('header-menu', () => {
+        this.isMenuOpen.set(false);
+      });
+    }
   }
 
   closeMenu(): void {
+    this.overlayHistory.popOverlay('header-menu');
     this.isMenuOpen.set(false);
   }
 
@@ -188,12 +206,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.deletePin = '';
     this.deleteErrorMessage.set(null);
     this.showDeleteConfirmModal.set(true);
+    this.overlayHistory.pushOverlay('header-delete-modal', () => {
+      this.closeDeleteConfirmModal();
+    });
   }
 
   closeDeleteConfirmModal(): void {
     if (this.isDeleting()) {
       return;
     }
+    this.overlayHistory.popOverlay('header-delete-modal');
     this.deletePin = '';
     this.showDeleteConfirmModal.set(false);
     this.deleteErrorMessage.set(null);

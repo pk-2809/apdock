@@ -95,11 +95,13 @@
           </button>
 
           <!-- Card 2: Gym Schedule (Coral / Amber Tinted Glass) -->
+          <!-- Card 2: Gym Schedule (Visibly Non-interactive / Coming Soon) -->
           <button
             type="button"
             id="gymScheduleCard"
-            class="squircle-card square-card card-gym anim-stack-2"
-            (click)="onCardClick('gym')"
+            class="squircle-card square-card card-gym anim-stack-2 is-disabled"
+            aria-disabled="true"
+            tabindex="-1"
           >
             <div class="card-icon-bubble gym-bubble" aria-hidden="true">
               <svg
@@ -121,7 +123,7 @@
             </div>
             <div class="card-meta">
               <span class="card-label">Gym Schedule</span>
-              <span class="card-sublabel">Workout Routine</span>
+              <span class="card-badge-coming-soon">Coming soon</span>
             </div>
           </button>
 

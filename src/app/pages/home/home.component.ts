@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { DietService } from '../../core/services/diet.service';
 import { InstallService } from '../../core/services/install.service';
 import { PwaUpdateService } from '../../core/services/pwa-update.service';
+import { OverlayHistoryService } from '../../core/services/overlay-history.service';
 
 export type LifestyleModule = 'diet' | 'gym';
 
@@ -24,6 +25,7 @@ export class HomeComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pwaUpdate = inject(PwaUpdateService);
+  private readonly overlayHistory = inject(OverlayHistoryService);
 
   readonly isDietModalOpen = signal<boolean>(false);
   readonly now = signal<Date>(new Date());
@@ -60,12 +62,22 @@ export class HomeComponent {
     }
   }
 
+  openDietModal(): void {
+    this.isDietModalOpen.set(true);
+    this.overlayHistory.pushOverlay('home-diet-modal', () => {
+      this.isDietModalOpen.set(false);
+      this.pwaUpdate.notifyOverlayClosed();
+    });
+  }
+
   closeDietModal(): void {
+    this.overlayHistory.popOverlay('home-diet-modal');
     this.isDietModalOpen.set(false);
     this.pwaUpdate.notifyOverlayClosed();
   }
 
   onDietPreferenceSaved(): void {
+    this.overlayHistory.popOverlay('home-diet-modal');
     this.isDietModalOpen.set(false);
     this.pwaUpdate.notifyOverlayClosed();
     this.router.navigate(['/diet']);
