@@ -5,6 +5,7 @@ import { SplashScreenComponent } from './components/splash-screen/splash-screen.
 import { ThemeService, ThemeMode } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { PwaUpdateService } from './core/services/pwa-update.service';
+import { InstallService } from './core/services/install.service';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import { PwaUpdateService } from './core/services/pwa-update.service';
 export class App {
   readonly auth = inject(AuthService);
   readonly pwaUpdate = inject(PwaUpdateService);
+  readonly installService = inject(InstallService);
   private readonly themeService = inject(ThemeService);
 
   readonly showSplash = signal<boolean>(true);

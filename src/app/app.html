@@ -102,5 +102,52 @@
         </button>
       </aside>
     }
+
+    <!-- iOS Add to Home Screen Instructions Bottom Sheet -->
+    @if (installService.showIosSheet()) {
+      <div class="ios-install-backdrop" (click)="installService.closeIosSheet()">
+        <div
+          class="ios-install-sheet"
+          (click)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add apdock to Home Screen instructions"
+        >
+          <div class="ios-sheet-handle" aria-hidden="true"></div>
+          <div class="ios-sheet-header">
+            <h3 class="ios-sheet-title">Add to Home Screen</h3>
+            <p class="ios-sheet-subtitle">Install apdock on your iPhone for the fast standalone experience</p>
+          </div>
+          <div class="ios-steps-list">
+            <div class="ios-step-item">
+              <div class="step-badge">1</div>
+              <div class="step-copy">
+                Tap the <span class="step-highlight">Share</span> button in Safari's bottom toolbar
+              </div>
+            </div>
+            <div class="ios-step-item">
+              <div class="step-badge">2</div>
+              <div class="step-copy">
+                Scroll down and tap <span class="step-highlight">Add to Home Screen</span>
+              </div>
+            </div>
+            <div class="ios-step-item">
+              <div class="step-badge">3</div>
+              <div class="step-copy">
+                Tap <span class="step-highlight">Add</span> in the top-right corner to complete
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="ios-sheet-close-btn"
+            (click)="installService.closeIosSheet()"
+            aria-label="Close instructions"
+          >
+            Got It
+          </button>
+        </div>
+      </div>
+    }
   </div>
 }

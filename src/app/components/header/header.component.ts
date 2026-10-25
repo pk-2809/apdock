@@ -17,6 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { DietService, DietGoal, DietType } from '../../core/services/diet.service';
 import { PwaUpdateService } from '../../core/services/pwa-update.service';
+import { InstallService } from '../../core/services/install.service';
 import { DietPreferenceModalComponent } from '../diet-preference-modal/diet-preference-modal.component';
 
 @Component({
@@ -31,6 +32,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly themeService = inject(ThemeService);
   readonly dietService = inject(DietService);
   readonly pwaUpdate = inject(PwaUpdateService);
+  readonly installService = inject(InstallService);
   readonly appVersion = this.pwaUpdate.appVersion;
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);

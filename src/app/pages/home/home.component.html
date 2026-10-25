@@ -25,6 +25,43 @@
         </h1>
       </section>
 
+      <!-- Install CTA Banner (Value-Gated, Dismissible for 14 Days) -->
+      @if (installService.showHomeBanner()) {
+        <aside class="home-install-banner" role="banner" aria-label="Install apdock app">
+          <div class="install-banner-left">
+            <div class="install-banner-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="install-banner-text">
+              <span class="install-banner-title">Install apdock App</span>
+              <span class="install-banner-desc">Fast, offline-ready standalone cockpit</span>
+            </div>
+          </div>
+          <div class="install-banner-actions">
+            <button
+              type="button"
+              class="install-banner-btn"
+              (click)="installService.promptInstall()"
+              aria-label="Install apdock"
+            >
+              Install
+            </button>
+            <button
+              type="button"
+              class="install-banner-dismiss"
+              (click)="installService.dismissBanner()"
+              aria-label="Dismiss install banner for 14 days"
+            >
+              ✕
+            </button>
+          </div>
+        </aside>
+      }
+
       <!-- Bottom Section: Apple-Style Tinted Glass Squircle Cards Grid -->
       <section class="cards-section" aria-label="Lifestyle modules">
         <div class="cards-grid">

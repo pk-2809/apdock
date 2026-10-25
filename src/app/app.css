@@ -184,3 +184,135 @@
   }
 }
 
+/* iOS Add to Home Screen Bottom Sheet */
+.ios-install-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.25s ease both;
+}
+
+.ios-install-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border-radius: 32px 32px 0 0;
+  border-top: 1px solid var(--border-card);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+  padding: 12px 20px calc(var(--sab, 0px) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: sheetSlideUp 0.35s var(--spring-apple) both;
+  box-sizing: border-box;
+}
+
+.ios-sheet-handle {
+  width: 38px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-card);
+  margin: 0 auto;
+}
+
+.ios-sheet-header {
+  text-align: center;
+}
+
+.ios-sheet-title {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.ios-sheet-subtitle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.ios-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  padding: 12px 14px;
+}
+
+.ios-step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  border: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-sky);
+  flex-shrink: 0;
+}
+
+.step-copy {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.step-highlight {
+  font-weight: 700;
+  color: var(--brand-sky);
+}
+
+.ios-sheet-close-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--brand-sky);
+  color: #fff;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.ios-sheet-close-btn:hover {
+  filter: brightness(1.08);
+}
+
+.ios-sheet-close-btn:active {
+  transform: scale(0.98);
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+

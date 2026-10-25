@@ -5,6 +5,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { DietPreferenceModalComponent } from '../../components/diet-preference-modal/diet-preference-modal.component';
 import { AuthService } from '../../core/services/auth.service';
 import { DietService } from '../../core/services/diet.service';
+import { InstallService } from '../../core/services/install.service';
 
 export type LifestyleModule = 'diet' | 'gym';
 
@@ -18,6 +19,7 @@ export type LifestyleModule = 'diet' | 'gym';
 export class HomeComponent {
   readonly auth = inject(AuthService);
   readonly dietService = inject(DietService);
+  readonly installService = inject(InstallService);
   private readonly router = inject(Router);
 
   readonly isDietModalOpen = signal<boolean>(false);
