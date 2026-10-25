@@ -13,6 +13,7 @@
 .auth-page-root {
   position: relative;
   width: 100%;
+  height: 100dvh;
   min-height: 100dvh;
   background-color: var(--bg-deep);
   color: var(--text-primary);
@@ -20,8 +21,9 @@
   flex-direction: column;
   justify-content: flex-end; /* Card aligns & starts from bottom */
   align-items: center;
-  padding: calc(var(--sat) + 16px) 0 0;
+  padding: var(--sat) 0 0;
   overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -106,27 +108,27 @@
   z-index: 10;
   width: 100%;
   max-width: 440px;
-  min-height: 100dvh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end; /* Ensures bottom card alignment */
   align-items: center;
-  margin-top: auto;
+  box-sizing: border-box;
 }
 
 .auth-header {
   text-align: center;
-  padding: 24px 20px 20px;
+  padding: 16px 20px 14px;
   margin-top: auto;
   animation: fadeInDown 0.6s var(--spring-apple) both;
 }
 
 .brand-icon-wrapper {
-  width: 64px;
-  height: 64px;
-  border-radius: 19px;
+  width: 58px;
+  height: 58px;
+  border-radius: 17px;
   overflow: hidden;
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,7 +153,7 @@
 }
 
 .brand-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1.1;
@@ -162,10 +164,10 @@
 }
 
 .brand-subtitle {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-muted);
-  margin-top: 4px;
-  line-height: 1.4;
+  margin-top: 3px;
+  line-height: 1.35;
   font-weight: 450;
   transition: opacity 0.25s ease;
 }
@@ -176,8 +178,8 @@
 .auth-card {
   position: relative;
   width: 100%;
-  padding: 24px 22px calc(var(--sab) + 26px);
-  border-radius: 36px 36px 0 0;
+  padding: 20px 20px calc(var(--sab) + 18px);
+  border-radius: 32px 32px 0 0;
   background: var(--bg-card);
   border-top: 1px solid var(--border-card);
   border-left: 1px solid var(--border-card);
@@ -196,11 +198,28 @@
 }
 
 @media (min-width: 601px) {
+  .auth-page-root {
+    justify-content: center;
+    padding: var(--sat) 16px var(--sab);
+  }
+
+  .auth-container {
+    justify-content: center;
+    margin: auto 0;
+    flex: initial;
+    width: 100%;
+  }
+
+  .auth-header {
+    margin-top: 0;
+    padding: 0 20px 16px;
+  }
+
   .auth-card {
-    border-radius: 34px 34px 28px 28px;
-    margin-bottom: 24px;
+    border-radius: 32px;
+    margin-bottom: 0;
     border-bottom: 1px solid var(--border-card);
-    padding: 24px 26px 28px;
+    padding: 24px 26px 26px;
     box-shadow: var(--card-shadow);
   }
 }

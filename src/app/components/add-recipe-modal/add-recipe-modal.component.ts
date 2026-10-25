@@ -242,7 +242,9 @@ export class AddRecipeModalComponent implements OnChanges, OnDestroy {
   onInputFocus(event: FocusEvent): void {
     const target = event.target as HTMLElement;
     setTimeout(() => {
-      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof target?.scrollIntoView === 'function') {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }, 280);
   }
 
