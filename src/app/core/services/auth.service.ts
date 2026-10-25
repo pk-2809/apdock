@@ -9,7 +9,11 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   deleteUser,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  setPersistence,
+  browserLocalPersistence,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -17,11 +21,126 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
   deleteDoc,
+  writeBatch,
   serverTimestamp
 } from 'firebase/firestore/lite';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { firebaseConfig } from '../firebase.config';
+
+export const AUTH_SYNTHETIC_DOMAIN = 'auth.apdock.internal';
+
+export const RESERVED_HANDLES = new Set([
+  'admin',
+  'administrator',
+  'root',
+  'support',
+  'help',
+  'apdock',
+  'system',
+  'auth',
+  'api',
+  'null',
+  'undefined',
+  'anonymous',
+  'guest',
+  'user',
+  'dock',
+  'moderator',
+  'security',
+  'public',
+  'private',
+  'dev',
+  'test',
+  'official'
+]);
+
+export function handleToSyntheticEmail(handle: string): string {
+  const clean = handle.trim().toLowerCase().replace(/^@/, '');
+  return `${clean}@${AUTH_SYNTHETIC_DOMAIN}`;
+}
+
+export function validatePinStrength(pin: string): { valid: boolean; reason?: string } {
+  const trimmed = pin.trim();
+  if (!/^\d{6}$/.test(trimmed)) {
+    return { valid: false, reason: 'PIN must be exactly 6 digits.' };
+  }
+  // Reject repeating single digit: 000000, 111111, ..., 999999
+  if (/^(\d)\1{5}$/.test(trimmed)) {
+    return { valid: false, reason: 'PIN cannot be all the same digit.' };
+  }
+  // Reject sequential series
+  const ascending = '0123456789';
+  const descending = '9876543210';
+  if (ascending.includes(trimmed) || descending.includes(trimmed)) {
+    return { valid: false, reason: 'PIN cannot be a sequential series of numbers.' };
+  }
+  // Reject common predictable patterns
+  const blacklist = ['112233', '121212', '123123', '654321', '000000', '123456'];
+  if (blacklist.includes(trimmed)) {
+    return { valid: false, reason: 'Please choose a less predictable PIN.' };
+  }
+  return { valid: true };
+}
+
+export function generateCandidateHandles(name: string): string[] {
+  const words = name
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-z0-9]/g, ''))
+    .filter(Boolean);
+
+  let firstName = words[0] || '';
+  let fullName = words.join('');
+
+  if (!firstName || firstName.length < 2) {
+    firstName = 'user';
+  }
+  if (!fullName || fullName.length < 2) {
+    fullName = firstName;
+  }
+
+  firstName = firstName.slice(0, 14);
+  fullName = fullName.slice(0, 17);
+
+  const candidates: string[] = [];
+  const addIfValid = (h: string) => {
+    const clean = h.toLowerCase();
+    if (
+      clean.length >= 3 &&
+      clean.length <= 20 &&
+      !RESERVED_HANDLES.has(clean) &&
+      !candidates.includes(clean)
+    ) {
+      candidates.push(clean);
+    }
+  };
+
+  if (firstName.length >= 3 && !RESERVED_HANDLES.has(firstName)) {
+    addIfValid(firstName);
+  }
+
+  if (fullName.length >= 3 && fullName !== firstName && !RESERVED_HANDLES.has(fullName)) {
+    addIfValid(fullName);
+  }
+
+  let attempts = 0;
+  while (candidates.length < 8 && attempts < 30) {
+    attempts++;
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const base = candidates.length % 2 === 0 && fullName !== firstName ? fullName : firstName;
+    const truncated = base.slice(0, 17);
+    addIfValid(`${truncated}${randomSuffix}`);
+  }
+
+  while (candidates.length < 8) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    addIfValid(`user${randomSuffix}`);
+  }
+
+  return candidates.slice(0, 8);
+}
 
 export interface UserProfile {
   uid: string;
@@ -39,6 +158,7 @@ export interface UserProfile {
     health: { title: string; enabled: boolean };
     home: { title: string; enabled: boolean };
   };
+  pendingAuthDeletion?: boolean;
 }
 
 @Injectable({
@@ -103,6 +223,27 @@ export class AuthService {
     this.auth = getAuth(this.app);
     this.db = getFirestore(this.app);
 
+    // Step 2: Initialize App Check with debug token for local dev/emulator
+    if (typeof window !== 'undefined') {
+      try {
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const siteKey = (firebaseConfig as any).recaptchaSiteKey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+        initializeAppCheck(this.app, {
+          provider: new ReCaptchaV3Provider(siteKey),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (err) {
+        console.warn('App Check initialization:', err);
+      }
+
+      // Configure persistent session: PIN needed only on a new device or after explicit sign-out
+      setPersistence(this.auth, browserLocalPersistence).catch(() => {});
+    }
+
     // Listen to real-time auth changes
     onAuthStateChanged(this.auth, async (user) => {
       this.currentUser.set(user);
@@ -116,14 +257,15 @@ export class AuthService {
   }
 
   /**
-   * Helper: Hash/format internal password from user PIN
+   * Password derivation from user PIN
    */
   private formatPinToPassword(pin: string): string {
     return `apdock_pin_${pin.trim()}_secure`;
   }
 
   /**
-   * Login with Username and Security PIN
+   * Sign In with Username (or Email) and 6-Digit PIN
+   * Option B: No Firestore read before authentication!
    */
   async signInWithUsernameAndPin(usernameInput: string, pin: string): Promise<User> {
     this.isSubmitting.set(true);
@@ -133,65 +275,41 @@ export class AuthService {
     this.loadingStage.set('Connecting to secure apdock vault.');
 
     try {
-      const cleanUser = usernameInput.trim().toLowerCase().replace(/^@/, '');
-      if (!cleanUser) {
+      const cleanInput = usernameInput.trim().toLowerCase().replace(/^@/, '');
+      if (!cleanInput) {
         throw new Error('Please enter your username.');
       }
 
-      await this.delay(350);
+      const pinValidation = validatePinStrength(pin);
+      if (!pinValidation.valid) {
+        throw new Error(pinValidation.reason || 'Invalid PIN.');
+      }
+
+      await this.delay(200);
       this.loadingStep.set(2);
-      this.loadingStage.set(`Locating @${cleanUser} profile.`);
+      this.loadingStage.set(`Resolving @${cleanInput} authentication.`);
 
-      // 1. Check local device cache first (instant & immune to adblockers)
-      let userEmail: string | null = null;
-      try {
-        userEmail = localStorage.getItem(`apdock_user_${cleanUser}`);
-      } catch {}
-
-      // 2. Resolve email linked to username in Firestore if not in local cache
-      let lookupError: unknown = null;
-      if (!userEmail) {
-        try {
-          const usernameDocRef = doc(this.db, 'usernames', cleanUser);
-          const usernameSnap = await getDoc(usernameDocRef);
-
-          if (usernameSnap.exists()) {
-            userEmail = usernameSnap.data()['email'];
-            if (userEmail) {
-              try {
-                localStorage.setItem(`apdock_user_${cleanUser}`, userEmail);
-              } catch {}
-            }
-          }
-        } catch (err) {
-          lookupError = err;
-          console.warn('Firestore lookup warning:', err);
-        }
-      }
-
-      if (!userEmail) {
-        if (cleanUser.includes('@')) {
-          userEmail = cleanUser;
-        } else if (lookupError) {
-          throw new Error('Database connection blocked by browser shields or adblocker. Please turn off Brave Shields for localhost, or sign in using your email.');
-        } else {
-          throw new Error(`Username ${cleanUser} not found, Please re-verify or create an account.`);
-        }
-      }
+      // Derive authentication email:
+      // If user typed a real email (existing account), use it directly.
+      // Otherwise, map handle to synthetic domain: ${handle}@auth.apdock.internal.
+      // Zero Firestore reads before authentication!
+      const userEmail = cleanInput.includes('@')
+        ? cleanInput
+        : handleToSyntheticEmail(cleanInput);
 
       this.loadingStep.set(3);
-      this.loadingStage.set('Verifying your secret 4-digit PIN.');
-      await this.delay(350);
+      this.loadingStage.set('Verifying your secret 6-digit PIN.');
+      await this.delay(200);
 
       const secret = this.formatPinToPassword(pin);
       const cred = await signInWithEmailAndPassword(this.auth, userEmail, secret);
 
       this.loadingStep.set(4);
-      this.loadingStage.set('All set! Unlocking your apdock...');
-      await this.delay(400);
+      this.loadingStage.set('Unlocking your apdock space...');
+      await this.delay(200);
 
-      await this.syncUserToBackend(cred.user, { username: cleanUser });
-      await this.delay(300);
+      // Now authenticated: fetch or sync profile
+      await this.fetchOrSyncUserProfile(cred.user);
       return cred.user;
     } catch (err: unknown) {
       const msg = this.translateFirebaseError(err);
@@ -205,8 +323,9 @@ export class AuthService {
   }
 
   /**
-   * Sign Up with Name, Email, PIN & Confirm PIN
-   * Automatically generates a unique username with incrementing number if taken (e.g., test, test1, test2)
+   * Sign Up with Name, optional Real Email, and 6-Digit PIN
+   * Option B: Generate candidates, attempt createUserWithEmailAndPassword per candidate on synthetic domain
+   * (max 8 attempts on collision), then ONE writeBatch for /users/{uid} and /usernames/{handle}.
    */
   async signUpWithNameEmailPin(
     name: string,
@@ -223,42 +342,100 @@ export class AuthService {
       const cleanName = name.trim();
       const cleanEmail = email.trim().toLowerCase();
 
-      await this.delay(350);
-      this.loadingStep.set(2);
+      if (!cleanName) {
+        throw new Error('Please enter your name.');
+      }
 
-      // Auto-create unique username (e.g. test, test1, test2...)
-      const uniqueUsername = await this.generateUniqueUsername(cleanName, cleanEmail);
-      this.loadingStage.set(`Creating unique @${uniqueUsername} handle.`);
-      try {
-        localStorage.setItem(`apdock_user_${uniqueUsername.toLowerCase()}`, cleanEmail);
-      } catch {}
-      await this.delay(350);
+      const pinValidation = validatePinStrength(pin);
+      if (!pinValidation.valid) {
+        throw new Error(pinValidation.reason || 'Invalid PIN.');
+      }
+
+      await this.delay(200);
+      this.loadingStep.set(2);
+      this.loadingStage.set('Generating candidate handles.');
+
+      const candidates = generateCandidateHandles(cleanName);
+      const secret = this.formatPinToPassword(pin);
+
+      let createdUser: User | null = null;
+      let chosenHandle: string | null = null;
 
       this.loadingStep.set(3);
-      this.loadingStage.set('Securing your private 4-digit PIN.');
-      const secret = this.formatPinToPassword(pin);
-      const cred = await createUserWithEmailAndPassword(this.auth, cleanEmail, secret);
+      this.loadingStage.set('Securing unique handle & 6-digit PIN.');
 
-      // Update Firebase Auth display name
-      await updateProfile(cred.user, { displayName: cleanName });
-      await this.delay(350);
+      // Try candidates against Firebase Auth (up to 8 attempts)
+      for (let i = 0; i < candidates.length && i < 8; i++) {
+        const candidate = candidates[i];
+        const syntheticEmail = handleToSyntheticEmail(candidate);
+        try {
+          const cred = await createUserWithEmailAndPassword(this.auth, syntheticEmail, secret);
+          createdUser = cred.user;
+          chosenHandle = candidate;
+          break;
+        } catch (authErr: unknown) {
+          const code = (authErr as { code?: string })?.code;
+          if (code === 'auth/email-already-in-use') {
+            // Collision: proceed to next candidate
+            continue;
+          }
+          throw authErr;
+        }
+      }
+
+      if (!createdUser || !chosenHandle) {
+        throw new Error('Unable to allocate a unique username. Please try a different name.');
+      }
+
+      // Update Auth display name
+      await updateProfile(createdUser, { displayName: cleanName });
 
       this.loadingStep.set(4);
-      this.loadingStage.set('Configuring 4 lifestyle quadrants.');
+      this.loadingStage.set(`Finalizing @${chosenHandle} vault space.`);
 
-      // Backend sync to Firestore
-      await this.syncUserToBackend(cred.user, {
-        displayName: cleanName,
-        username: uniqueUsername,
-        isNewUser: true
+      // Step 1: ONE writeBatch creating /users/{uid} and /usernames/{handle}
+      const batch = writeBatch(this.db);
+      const usernameDocRef = doc(this.db, 'usernames', chosenHandle);
+      batch.set(usernameDocRef, {
+        uid: createdUser.uid,
+        createdAt: serverTimestamp()
       });
-      await this.delay(350);
+
+      const userDocRef = doc(this.db, 'users', createdUser.uid);
+      const initialProfile: UserProfile = {
+        uid: createdUser.uid,
+        username: chosenHandle,
+        displayName: cleanName,
+        email: cleanEmail || null, // Real email for profile if provided; never synthetic email
+        photoURL: createdUser.photoURL || null,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        themePreference: 'system',
+        quadrants: {
+          family: { title: 'Family & Tribe', enabled: true },
+          flow: { title: 'Daily Flow & Tasks', enabled: true },
+          health: { title: 'Health & Wellness', enabled: true },
+          home: { title: 'Home & Sanctuary', enabled: true }
+        }
+      };
+      batch.set(userDocRef, initialProfile);
+
+      try {
+        await batch.commit();
+      } catch (batchErr) {
+        console.warn('Batch commit notice (will repair idempotently on next launch):', batchErr);
+      }
+
+      this.userProfile.set(initialProfile);
+      try {
+        localStorage.setItem(`apdock_profile_${createdUser.uid}`, JSON.stringify(initialProfile));
+      } catch {}
 
       this.loadingStep.set(5);
       this.loadingStage.set('All set! Welcome to your apdock.');
-      await this.delay(400);
+      await this.delay(300);
 
-      return { user: cred.user, username: uniqueUsername };
+      return { user: createdUser, username: chosenHandle };
     } catch (err: unknown) {
       const msg = this.translateFirebaseError(err);
       this.authError.set(msg);
@@ -271,90 +448,7 @@ export class AuthService {
   }
 
   /**
-   * Auto-create unique username based on dynamic name logic:
-   * e.g., 'Alex River' ->
-   * 1. 'alex'
-   * 2. if taken -> 'alexriver'
-   * 3. if taken -> 'alex1'
-   * 4. if taken -> 'alexriver1'
-   * 5. if taken -> 'alex2'
-   * 6. if taken -> 'alexriver2'...
-   */
-  async generateUniqueUsername(name: string, email: string): Promise<string> {
-    const words = name
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .map((w) => w.replace(/[^a-z0-9]/g, ''))
-      .filter(Boolean);
-
-    let firstName = words[0] || '';
-    let fullName = words.join('');
-
-    if (!firstName || firstName.length < 2) {
-      firstName = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-    if (!firstName) firstName = 'dock';
-    if (!fullName || fullName.length < 2) fullName = firstName;
-
-    firstName = firstName.slice(0, 14);
-    fullName = fullName.slice(0, 20);
-
-    const hasDistinctFull = fullName !== firstName && fullName.length > firstName.length;
-
-    // Helper: checks candidate availability in both localStorage cache and Firestore
-    const isAvailable = async (candidate: string): Promise<boolean> => {
-      // 1. Check local device cache
-      try {
-        if (localStorage.getItem(`apdock_user_${candidate}`)) {
-          return false;
-        }
-      } catch {}
-
-      // 2. Check Firestore usernames collection
-      try {
-        const usernameDocRef = doc(this.db, 'usernames', candidate);
-        const snap = await getDoc(usernameDocRef);
-        return !snap.exists();
-      } catch {
-        // If Firestore is temporarily unreachable or blocked, consider available if not locally taken
-        return true;
-      }
-    };
-
-    // Candidate 1: First name (e.g. 'alex')
-    if (await isAvailable(firstName)) {
-      return firstName;
-    }
-
-    // Candidate 2: Full name (e.g. 'alexriver')
-    if (hasDistinctFull && (await isAvailable(fullName))) {
-      return fullName;
-    }
-
-    // Candidate 3+: Alternating sequence with numbers (e.g. 'alex1', 'alexriver1', 'alex2', 'alexriver2'...)
-    let counter = 1;
-    while (counter <= 200) {
-      const candidateFirst = `${firstName}${counter}`;
-      if (await isAvailable(candidateFirst)) {
-        return candidateFirst;
-      }
-
-      if (hasDistinctFull) {
-        const candidateFull = `${fullName}${counter}`;
-        if (await isAvailable(candidateFull)) {
-          return candidateFull;
-        }
-      }
-
-      counter++;
-    }
-
-    return `${firstName}${Date.now().toString().slice(-4)}`;
-  }
-
-  /**
-   * Sign out the active user with complete session killing mechanism
+   * Sign out the active user
    */
   async signOut(): Promise<void> {
     this.authError.set(null);
@@ -372,19 +466,15 @@ export class AuthService {
   }
 
   /**
-   * Delete account with complete backend deletion mechanism:
-   * 1. Removes user profile document from Firestore (`users/{uid}`)
-   * 2. Releases reserved username document from Firestore (`usernames/{username}`)
-   * 3. Cleans up local device caches
-   * 4. Deletes Firebase Auth user (`deleteUser`)
-   * 5. Fully kills active session
+   * Delete account with pre-reauthentication, atomic batched deletion,
+   * local data purge, and orphan prevention marker.
    */
-  async deleteAccount(): Promise<void> {
+  async deleteAccount(pin?: string): Promise<void> {
     this.isSubmitting.set(true);
     this.authError.set(null);
 
     const user = this.auth.currentUser || this.currentUser();
-    if (!user) {
+    if (!user || !user.email) {
       this.isSubmitting.set(false);
       throw new Error('No authenticated user found.');
     }
@@ -393,33 +483,45 @@ export class AuthService {
     const username = this.userProfile()?.username || '';
 
     try {
-      // 1. Delete user document in Firestore
-      try {
-        const userDocRef = doc(this.db, 'users', uid);
-        await deleteDoc(userDocRef);
-      } catch (err) {
-        console.warn('Could not delete user Firestore doc:', err);
-      }
-
-      // 2. Delete reserved username in Firestore
-      if (username) {
-        try {
-          const usernameDocRef = doc(this.db, 'usernames', username.toLowerCase());
-          await deleteDoc(usernameDocRef);
-        } catch (err) {
-          console.warn('Could not release username in Firestore:', err);
+      // 1. Re-authenticate with 6-digit PIN first if provided
+      if (pin) {
+        const pinValidation = validatePinStrength(pin);
+        if (!pinValidation.valid) {
+          throw new Error('Incorrect PIN. Please enter your valid 6-digit PIN.');
         }
-
-        // Clean up local device username cache
-        try {
-          localStorage.removeItem(`apdock_user_${username.toLowerCase()}`);
-        } catch {}
+        const secret = this.formatPinToPassword(pin);
+        const credential = EmailAuthProvider.credential(user.email, secret);
+        await reauthenticateWithCredential(user, credential);
       }
+
+      // 2. Atomic writeBatch deletion of Firestore documents
+      const batch = writeBatch(this.db);
+      batch.delete(doc(this.db, 'users', uid));
+      if (username) {
+        batch.delete(doc(this.db, 'usernames', username.toLowerCase()));
+      }
+      await batch.commit();
 
       // 3. Delete user from Firebase Auth
-      await deleteUser(user);
+      try {
+        await deleteUser(user);
+        // 4. Purge all local storage for this UID
+        this.purgeUserLocalStorage(uid);
+        try {
+          localStorage.removeItem('apdock_pending_auth_deletion');
+        } catch {}
+      } catch (authDeleteErr) {
+        // If deleteUser fails after Firestore batch commit, record pending deletion marker
+        try {
+          localStorage.setItem(
+            'apdock_pending_auth_deletion',
+            JSON.stringify({ uid, timestamp: Date.now() })
+          );
+        } catch {}
+        throw authDeleteErr;
+      }
 
-      // 4. Kill session and reset signals
+      // 5. Reset reactive state
       this.currentUser.set(null);
       this.userProfile.set(null);
       try {
@@ -428,7 +530,8 @@ export class AuthService {
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       if (code === 'auth/requires-recent-login') {
-        const msg = 'For security reasons, deleting your account requires recent sign-in. Please sign out and sign in again before deleting your account.';
+        const msg =
+          'For security reasons, deleting your account requires recent sign-in. Please sign in again with your PIN before deleting.';
         this.authError.set(msg);
         throw new Error(msg);
       }
@@ -441,116 +544,61 @@ export class AuthService {
   }
 
   /**
-   * Synchronize user record to Firestore backend on user creation / login
+   * Purge all apdock_{uid}_* keys and profile from localStorage
    */
-  async syncUserToBackend(
-    user: User,
-    options?: { displayName?: string; username?: string; isNewUser?: boolean }
-  ): Promise<void> {
-    this.isBackendSyncing.set(true);
-    this.backendSyncSuccess.set(false);
+  purgeUserLocalStorage(uid: string): void {
     try {
-      const userRef = doc(this.db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      const name = options?.displayName || user.displayName || 'Apdock Member';
-      const existingData = userSnap.exists() ? (userSnap.data() as UserProfile) : null;
-      const username = options?.username || existingData?.username || (await this.generateUniqueUsername(name, user.email || 'dock'));
-
-      if (!userSnap.exists() || options?.isNewUser) {
-        // 1. Save username claim in Firestore
-        try {
-          await setDoc(doc(this.db, 'usernames', username.toLowerCase()), {
-            uid: user.uid,
-            username: username.toLowerCase(),
-            email: user.email?.toLowerCase() || '',
-            displayName: name,
-            createdAt: serverTimestamp()
-          });
-        } catch (e) {
-          console.warn('Could not write to usernames index:', e);
+      if (typeof localStorage === 'undefined') return;
+      const prefix = `apdock_${uid}_`;
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith(prefix) || key === `apdock_profile_${uid}`)) {
+          keysToRemove.push(key);
         }
-
-        // 2. Create full initial user document in Firestore
-        const newProfile: UserProfile = {
-          uid: user.uid,
-          username: username.toLowerCase(),
-          email: user.email,
-          displayName: name,
-          photoURL: user.photoURL || null,
-          createdAt: serverTimestamp(),
-          lastLoginAt: serverTimestamp(),
-          themePreference: 'system',
-          quadrants: {
-            family: { title: 'Family & Tribe', enabled: true },
-            flow: { title: 'Daily Flow & Tasks', enabled: true },
-            health: { title: 'Health & Wellness', enabled: true },
-            home: { title: 'Home & Sanctuary', enabled: true }
-          }
-        };
-
-        await setDoc(userRef, newProfile);
-        this.userProfile.set(newProfile);
-        try {
-          localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(newProfile));
-        } catch {}
-      } else {
-        // Update existing user document with login timestamp
-        await updateDoc(userRef, {
-          lastLoginAt: serverTimestamp(),
-          ...(user.photoURL ? { photoURL: user.photoURL } : {}),
-          ...(user.displayName ? { displayName: user.displayName } : {})
-        });
-
-        const data = userSnap.data() as UserProfile;
-        this.userProfile.set(data);
-        try {
-          localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(data));
-        } catch {}
       }
-
-      this.backendSyncSuccess.set(true);
-    } catch (err: unknown) {
-      console.warn('Backend sync to Firestore failed or offline, caching locally:', err);
-      const fallbackUser = options?.username || user.email?.split('@')[0] || 'member';
-      const fallbackProfile: UserProfile = {
-        uid: user.uid,
-        username: fallbackUser,
-        email: user.email,
-        displayName: options?.displayName || user.displayName || 'Apdock Member',
-        photoURL: user.photoURL || null,
-        themePreference: 'system',
-        quadrants: {
-          family: { title: 'Family & Tribe', enabled: true },
-          flow: { title: 'Daily Flow & Tasks', enabled: true },
-          health: { title: 'Health & Wellness', enabled: true },
-          home: { title: 'Home & Sanctuary', enabled: true }
-        }
-      };
-      this.userProfile.set(fallbackProfile);
-      try {
-        localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(fallbackProfile));
-      } catch {}
-    } finally {
-      this.isBackendSyncing.set(false);
-    }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
   }
 
+  /**
+   * Idempotently fetch profile or repair missing profile if user exists in Auth
+   */
   private async fetchOrSyncUserProfile(user: User): Promise<void> {
+    this.isBackendSyncing.set(true);
     try {
+      // Check for orphan pending auth deletion
+      try {
+        const pending = localStorage.getItem('apdock_pending_auth_deletion');
+        if (pending) {
+          const parsed = JSON.parse(pending);
+          if (parsed.uid === user.uid) {
+            await deleteUser(user);
+            this.purgeUserLocalStorage(user.uid);
+            localStorage.removeItem('apdock_pending_auth_deletion');
+            this.currentUser.set(null);
+            this.userProfile.set(null);
+            return;
+          }
+        }
+      } catch {}
+
       const userRef = doc(this.db, 'users', user.uid);
       const snap = await getDoc(userRef);
+
       if (snap.exists()) {
         const data = snap.data() as UserProfile;
         this.userProfile.set(data);
         try {
           localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(data));
         } catch {}
+        this.backendSyncSuccess.set(true);
       } else {
-        await this.syncUserToBackend(user);
+        // Auth user exists without profile doc -> Repair idempotently!
+        await this.repairMissingProfileDoc(user);
       }
     } catch {
-      // Offline fallback: check local profile cache
+      // Offline fallback: load cached profile
       let cachedProfile: UserProfile | null = null;
       try {
         const raw = localStorage.getItem(`apdock_profile_${user.uid}`);
@@ -562,15 +610,61 @@ export class AuthService {
       if (cachedProfile) {
         this.userProfile.set(cachedProfile);
       } else {
+        const fallbackHandle = user.email?.split('@')[0] || 'member';
         this.userProfile.set({
           uid: user.uid,
-          username: user.email?.split('@')[0] || 'member',
-          email: user.email,
+          username: fallbackHandle,
+          email: null,
           displayName: user.displayName || 'Apdock Member',
           photoURL: user.photoURL || null
         });
       }
+    } finally {
+      this.isBackendSyncing.set(false);
     }
+  }
+
+  /**
+   * Repair missing profile doc idempotently
+   */
+  private async repairMissingProfileDoc(user: User): Promise<void> {
+    const rawHandle =
+      user.email && user.email.includes(`@${AUTH_SYNTHETIC_DOMAIN}`)
+        ? user.email.split('@')[0].toLowerCase()
+        : (user.displayName ? generateCandidateHandles(user.displayName)[0] : `user${Math.floor(1000 + Math.random() * 9000)}`);
+
+    const handle = rawHandle.slice(0, 20);
+    const batch = writeBatch(this.db);
+
+    batch.set(doc(this.db, 'usernames', handle), {
+      uid: user.uid,
+      createdAt: serverTimestamp()
+    });
+
+    const initialProfile: UserProfile = {
+      uid: user.uid,
+      username: handle,
+      displayName: user.displayName || 'Apdock Member',
+      email: null,
+      photoURL: user.photoURL || null,
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp(),
+      themePreference: 'system',
+      quadrants: {
+        family: { title: 'Family & Tribe', enabled: true },
+        flow: { title: 'Daily Flow & Tasks', enabled: true },
+        health: { title: 'Health & Wellness', enabled: true },
+        home: { title: 'Home & Sanctuary', enabled: true }
+      }
+    };
+    batch.set(doc(this.db, 'users', user.uid), initialProfile);
+
+    await batch.commit();
+    this.userProfile.set(initialProfile);
+    try {
+      localStorage.setItem(`apdock_profile_${user.uid}`, JSON.stringify(initialProfile));
+    } catch {}
+    this.backendSyncSuccess.set(true);
   }
 
   private delay(ms: number): Promise<void> {
@@ -585,20 +679,16 @@ export class AuthService {
     const err = error as { code?: string; message?: string };
     switch (err.code) {
       case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
         return 'Incorrect username or PIN. Please try again.';
       case 'auth/email-already-in-use':
-        return 'An account with this email already exists. Try signing in with your username.';
+        return 'This account already exists. Please sign in with your PIN.';
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
       case 'auth/weak-password':
-        return 'PIN must be exactly 4 digits.';
-      case 'auth/configuration-not-found':
-      case 'auth/operation-not-allowed':
-        return 'Email/Password sign-in is not enabled yet in your Firebase Console. Please go to Firebase Console > Authentication > Sign-in method and enable "Email/Password".';
-      case 'auth/admin-restricted-operation':
-        return 'Sign-up is restricted in your Firebase project settings.';
+        return 'PIN must be exactly 6 digits.';
       case 'auth/network-request-failed':
         return 'Network error. Please check your internet connectivity.';
       default:
@@ -611,7 +701,7 @@ export class AuthService {
     if (!user) return;
     try {
       const userRef = doc(this.db, 'users', user.uid);
-      await setDoc(userRef, { dietPreference: preference, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(userRef, { dietPreference: preference, lastLoginAt: serverTimestamp() }, { merge: true });
       const current = this.userProfile();
       if (current) {
         const updated = { ...current, dietPreference: preference };
@@ -625,4 +715,3 @@ export class AuthService {
     }
   }
 }
-

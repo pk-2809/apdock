@@ -37,11 +37,7 @@ export class HomeComponent {
 
   onCardClick(module: LifestyleModule): void {
     if (module === 'diet') {
-      if (this.dietService.hasPreference()) {
-        this.router.navigate(['/diet']);
-      } else {
-        this.isDietModalOpen.set(true);
-      }
+      this.router.navigate(['/diet']);
     }
   }
 

@@ -67,14 +67,25 @@ describe('HeaderComponent', () => {
     expect(component.isDietPrefMenuOpen()).toBe(false);
   });
 
-  it('should update goal and diet type through DietService', async () => {
+  it('should stage goal and diet type on selection and sync to DietService only on menu close', async () => {
     const saveSpy = vi.spyOn(dietService, 'savePreference').mockResolvedValue();
 
-    await component.updateGoal('gain');
-    expect(saveSpy).toHaveBeenCalledWith('gain', expect.any(String));
+    component.toggleDietPrefMenu();
+    expect(component.isDietPrefMenuOpen()).toBe(true);
 
-    await component.updateDietType('both');
-    expect(saveSpy).toHaveBeenCalledWith(expect.any(String), 'both');
+    // Clicking options should update staged signals but NOT call savePreference
+    component.updateGoal('gain');
+    expect(component.stagedGoal()).toBe('gain');
+    expect(saveSpy).not.toHaveBeenCalled();
+
+    component.updateDietType('both');
+    expect(component.stagedDietType()).toBe('both');
+    expect(saveSpy).not.toHaveBeenCalled();
+
+    // On menu close, it should sync the staged preferences
+    await component.closeDietPrefMenu();
+    expect(component.isDietPrefMenuOpen()).toBe(false);
+    expect(saveSpy).toHaveBeenCalledWith('gain', 'both');
   });
 
   it('should open and close the full diet modal', () => {
@@ -98,6 +109,24 @@ describe('HeaderComponent', () => {
     fixture.detectChanges();
     btn = fixture.nativeElement.querySelector('#dietPrefTriggerBtn');
     expect(btn).not.toBeNull();
+  });
+
+  it('should show "Diet Plan" as brand name when in diet module and "apdock" when not', () => {
+    component.inDietModule = false;
+    fixture.detectChanges();
+    let brandName = fixture.nativeElement.querySelector('.brand-name');
+    expect(brandName?.textContent?.trim()).toBe('apdock');
+
+    component.inDietModule = true;
+    fixture.detectChanges();
+    brandName = fixture.nativeElement.querySelector('.brand-name');
+    expect(brandName?.textContent?.trim()).toBe('Diet Plan');
+  });
+
+  it('should navigate to /home when navigateHome is called', () => {
+    const navSpy = vi.spyOn(router, 'navigate');
+    component.navigateHome();
+    expect(navSpy).toHaveBeenCalledWith(['/home']);
   });
 
   it('should call auth.signOut and navigate to /auth on handleSignOut', async () => {
@@ -125,9 +154,10 @@ describe('HeaderComponent', () => {
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     component.openDeleteConfirmModal();
+    component.deletePin = '849201';
     await component.handleConfirmDeleteAccount();
 
-    expect(deleteSpy).toHaveBeenCalled();
+    expect(deleteSpy).toHaveBeenCalledWith('849201');
     expect(component.showDeleteConfirmModal()).toBe(false);
     expect(navSpy).toHaveBeenCalledWith(['/auth']);
   });

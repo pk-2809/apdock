@@ -12,6 +12,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { DietService, DietGoal, DietType } from '../../core/services/diet.service';
@@ -20,7 +21,7 @@ import { DietPreferenceModalComponent } from '../diet-preference-modal/diet-pref
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, DietPreferenceModalComponent],
+  imports: [CommonModule, FormsModule, DietPreferenceModalComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -37,6 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly showDeleteConfirmModal = signal<boolean>(false);
   readonly isDeleting = signal<boolean>(false);
   readonly deleteErrorMessage = signal<string | null>(null);
+  deletePin = '';
 
   // Diet Preference Popover state (only visible inside diet module)
   readonly isDietModule = signal<boolean>(false);
@@ -50,9 +52,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Active diet preferences
+  // Active saved diet preferences
   readonly currentGoal = computed<DietGoal>(() => this.dietService.preference()?.goal || 'loss');
   readonly currentDietType = computed<DietType>(() => this.dietService.preference()?.dietType || 'veg');
+
+  // Staged diet preferences for popover menu (prevents API call on every toggle, syncs on menu close)
+  readonly stagedGoal = signal<DietGoal>('loss');
+  readonly stagedDietType = signal<DietType>('veg');
+  readonly animatingTab = signal<string | null>(null);
 
   // PWA Check for Updates states
   readonly isCheckingUpdate = signal<boolean>(false);
@@ -61,6 +68,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updateDietModuleState();
+    this.stagedGoal.set(this.currentGoal());
+    this.stagedDietType.set(this.currentDietType());
     this.routerSub = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -82,21 +91,55 @@ export class HeaderComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
     this.isMenuOpen.set(false);
-    this.isDietPrefMenuOpen.update((open) => !open);
+    if (this.isDietPrefMenuOpen()) {
+      this.closeDietPrefMenu();
+    } else {
+      this.stagedGoal.set(this.currentGoal());
+      this.stagedDietType.set(this.currentDietType());
+      this.isDietPrefMenuOpen.set(true);
+    }
   }
 
-  closeDietPrefMenu(): void {
+  async closeDietPrefMenu(): Promise<void> {
+    if (!this.isDietPrefMenuOpen()) {
+      return;
+    }
     this.isDietPrefMenuOpen.set(false);
+
+    // Sync to backend / diet service only on menu close if preferences actually changed
+    const savedGoal = this.currentGoal();
+    const savedType = this.currentDietType();
+    const newGoal = this.stagedGoal();
+    const newType = this.stagedDietType();
+
+    if (newGoal !== savedGoal || newType !== savedType) {
+      await this.dietService.savePreference(newGoal, newType);
+    }
   }
 
-  async updateGoal(goal: DietGoal): Promise<void> {
-    const currentType = this.currentDietType();
-    await this.dietService.savePreference(goal, currentType);
+  navigateHome(): void {
+    this.router.navigate(['/home']);
   }
 
-  async updateDietType(type: DietType): Promise<void> {
-    const currentGoal = this.currentGoal();
-    await this.dietService.savePreference(currentGoal, type);
+  triggerTabAnimation(tabId: string): void {
+    this.animatingTab.set(tabId);
+    setTimeout(() => {
+      if (this.animatingTab() === tabId) {
+        this.animatingTab.set(null);
+      }
+    }, 650);
+  }
+
+  updateGoal(goal: DietGoal): void {
+    this.triggerTabAnimation(goal);
+    this.stagedGoal.set(goal);
+    // User requirement: on change it should NOT trigger API call, it should trigger on menu close.
+  }
+
+  updateDietType(type: DietType): void {
+    this.triggerTabAnimation(type);
+    this.stagedDietType.set(type);
+    // User requirement: on change it should NOT trigger API call, it should trigger on menu close.
   }
 
   openFullDietModal(): void {
@@ -112,7 +155,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.isDietPrefMenuOpen.set(false);
+    this.closeDietPrefMenu();
     this.isMenuOpen.update((open) => !open);
   }
 
@@ -135,6 +178,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   openDeleteConfirmModal(): void {
     this.closeMenu();
+    this.deletePin = '';
     this.deleteErrorMessage.set(null);
     this.showDeleteConfirmModal.set(true);
   }
@@ -143,16 +187,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.isDeleting()) {
       return;
     }
+    this.deletePin = '';
     this.showDeleteConfirmModal.set(false);
     this.deleteErrorMessage.set(null);
   }
 
   async handleConfirmDeleteAccount(): Promise<void> {
+    const cleanPin = this.deletePin.trim();
+    if (!cleanPin || cleanPin.length !== 6) {
+      this.deleteErrorMessage.set('Please enter your 6-digit PIN to confirm deletion.');
+      return;
+    }
+
     this.isDeleting.set(true);
     this.deleteErrorMessage.set(null);
     try {
-      await this.auth.deleteAccount();
+      await this.auth.deleteAccount(cleanPin);
       this.showDeleteConfirmModal.set(false);
+      this.deletePin = '';
       await this.router.navigate(['/auth']);
     } catch (err: unknown) {
       const message =

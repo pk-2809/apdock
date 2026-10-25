@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidDietPreference(pref) {
+      return pref is map
+        && pref.keys().hasOnly(['goal', 'dietType', 'updatedAt'])
+        && pref.keys().hasAll(['goal', 'dietType'])
+        && (pref.goal in ['loss', 'gain'])
+        && (pref.dietType in ['veg', 'nonveg', 'both'])
+        && (!('updatedAt' in pref) || (pref.updatedAt is string && pref.updatedAt.size() <= 50) || (pref.updatedAt is timestamp));
+    }
+
+    function isValidUserDoc(data) {
+      let allowedKeys = [
+        'uid',
+        'username',
+        'displayName',
+        'email',
+        'photoURL',
+        'createdAt',
+        'lastLoginAt',
+        'themePreference',
+        'dietPreference',
+        'quadrants',
+        'pendingAuthDeletion'
+      ];
+      return data.keys().hasOnly(allowedKeys)
+        && data.keys().hasAll(['uid', 'username', 'createdAt', 'lastLoginAt'])
+        && data.uid is string && data.uid == request.auth.uid
+        && data.username is string && data.username.matches('^[a-z0-9]{3,20}$')
+        && data.createdAt is timestamp
+        && data.lastLoginAt is timestamp
+        && (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 60))
+        && (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 120))
+        && (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('themePreference' in data) || (data.themePreference in ['system', 'light', 'dark']))
+        && (!('dietPreference' in data) || isValidDietPreference(data.dietPreference))
+        && (!('quadrants' in data) || (data.quadrants is map && data.quadrants.size() <= 10))
+        && (!('pendingAuthDeletion' in data) || (data.pendingAuthDeletion is bool));
+    }
+
+    // =========================================================================
+    // Username Reservation Index: /usernames/{h}
+    // =========================================================================
+    match /usernames/{h} {
+      allow get: if isAuthenticated();
+      allow list: if false;
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && h.matches('^[a-z0-9]{3,20}$');
+      allow update: if false;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // =========================================================================
+    // User Profile Document: /users/{uid}
+    // =========================================================================
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if isOwner(uid)
+        && request.resource.data.createdAt == request.time
+        && isValidUserDoc(request.resource.data);
+      allow update: if isOwner(uid)
+        && isValidUserDoc(request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      // Subcollections reserved for v0.2 sync (denied for now)
+      match /{sub=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // =========================================================================
+    // Default Deny Rule
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

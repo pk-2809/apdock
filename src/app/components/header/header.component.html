@@ -1,12 +1,12 @@
 <header class="app-header" role="banner">
   <div class="header-container">
-    <!-- Brand identity: Logo & Title -->
-    <div class="header-brand">
+    <!-- Brand identity: Logo & Title (Left aligned, vertically centered) -->
+    <div class="header-brand" (click)="navigateHome()" role="button" tabindex="0">
       <div class="brand-logo-frame">
         <img src="app-icon.png" alt="apdock" width="32" height="32" class="brand-logo-img" />
       </div>
       <div class="brand-text-block">
-        <span class="brand-name">apdock</span>
+        <span class="brand-name">{{ isDietModule() ? 'Diet Plan' : 'apdock' }}</span>
       </div>
     </div>
 
@@ -32,10 +32,11 @@
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
+            stroke-width="2.2"
             stroke-linecap="round"
             stroke-linejoin="round"
             class="diet-pref-icon"
+            [class.open]="isDietPrefMenuOpen()"
           >
             <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 20 3c0 9-4 17-9 17Z" />
             <path d="M11 13c1.5-1.5 3.5-2.5 6-3" />
@@ -68,20 +69,46 @@
                 <button
                   type="button"
                   class="popover-seg-btn seg-loss"
-                  [class.active]="currentGoal() === 'loss'"
+                  [class.active]="stagedGoal() === 'loss'"
+                  [class.animate-select]="animatingTab() === 'loss'"
                   (click)="updateGoal('loss')"
                 >
-                  <span class="seg-icon">📉</span>
+                  <svg
+                    class="seg-svg icon-loss"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+                    <polyline points="16 17 22 17 22 11" />
+                  </svg>
                   <span>Weight Loss</span>
                 </button>
 
                 <button
                   type="button"
                   class="popover-seg-btn seg-gain"
-                  [class.active]="currentGoal() === 'gain'"
+                  [class.active]="stagedGoal() === 'gain'"
+                  [class.animate-select]="animatingTab() === 'gain'"
                   (click)="updateGoal('gain')"
                 >
-                  <span class="seg-icon">📈</span>
+                  <svg
+                    class="seg-svg icon-gain"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    <polyline points="16 7 22 7 22 13" />
+                  </svg>
                   <span>Weight Gain</span>
                 </button>
               </div>
@@ -96,61 +123,78 @@
                 <button
                   type="button"
                   class="popover-seg-btn seg-veg"
-                  [class.active]="currentDietType() === 'veg'"
+                  [class.active]="stagedDietType() === 'veg'"
+                  [class.animate-select]="animatingTab() === 'veg'"
                   (click)="updateDietType('veg')"
                 >
-                  <span class="seg-icon">🌿</span>
+                  <svg
+                    class="seg-svg icon-veg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 21V12" />
+                    <path d="M12 13c0-4.5 3.5-7 8-7-0.5 4.5-3.5 7-8 7Z" />
+                    <path d="M12 16c0-3.5-2.5-5.5-6-5.5.5 3.5 2.5 5.5 6 5.5Z" />
+                  </svg>
                   <span>Veg</span>
                 </button>
 
                 <button
                   type="button"
                   class="popover-seg-btn seg-nonveg"
-                  [class.active]="currentDietType() === 'nonveg'"
+                  [class.active]="stagedDietType() === 'nonveg'"
+                  [class.animate-select]="animatingTab() === 'nonveg'"
                   (click)="updateDietType('nonveg')"
                 >
-                  <span class="seg-icon">🍗</span>
+                  <svg
+                    class="seg-svg icon-nonveg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m15.4 15.6 3.3-3.3a4.5 4.5 0 0 0-6.4-6.4l-3.3 3.3a4.5 4.5 0 0 0 6.4 6.4Z" />
+                    <path d="m9 15-4 4" />
+                    <circle cx="4" cy="20" r="1.5" />
+                  </svg>
                   <span>Non-Veg</span>
                 </button>
 
                 <button
                   type="button"
                   class="popover-seg-btn seg-both"
-                  [class.active]="currentDietType() === 'both'"
+                  [class.active]="stagedDietType() === 'both'"
+                  [class.animate-select]="animatingTab() === 'both'"
                   (click)="updateDietType('both')"
                 >
-                  <span class="seg-icon">🥗</span>
+                  <svg
+                    class="seg-svg icon-both"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 3a9 9 0 0 1 0 18v-9a4.5 4.5 0 0 1 0-9Z" fill="currentColor" fill-opacity="0.35" />
+                    <circle cx="12" cy="7.5" r="1.5" fill="currentColor" />
+                    <circle cx="12" cy="16.5" r="1.5" />
+                  </svg>
                   <span>Both</span>
                 </button>
               </div>
             </div>
 
-            <div class="dropdown-divider"></div>
-
-            <!-- Detailed Customizer Trigger -->
-            <button
-              type="button"
-              class="popover-action-btn"
-              (click)="openFullDietModal()"
-              role="menuitem"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="action-icon"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-              <span>Full Customizer...</span>
-            </button>
           </div>
         }
       }
@@ -391,8 +435,23 @@
 
       <h3 id="deleteModalHeading" class="delete-modal-title">Delete Account?</h3>
       <p id="deleteModalDescription" class="delete-modal-text">
-        Are you sure you want to permanently delete your account? This action cannot be undone. All your dock space profile, reserved username, and settings will be permanently erased.
+        This will permanently delete your account and all data. This action cannot be undone.
       </p>
+
+      <div class="delete-pin-input-group">
+        <label for="deletePinInput" class="delete-pin-label">Enter PIN to confirm</label>
+        <input
+          id="deletePinInput"
+          type="password"
+          inputmode="numeric"
+          pattern="[0-9]{6}"
+          maxlength="6"
+          placeholder="••••••"
+          class="delete-pin-input"
+          [(ngModel)]="deletePin"
+          autocomplete="current-password"
+        />
+      </div>
 
       @if (deleteErrorMessage()) {
         <div class="delete-error-banner" role="alert">
@@ -419,7 +478,7 @@
             <span class="btn-spinner" aria-hidden="true"></span>
             <span>Deleting...</span>
           } @else {
-            <span>Yes, Delete Account</span>
+            <span>Delete</span>
           }
         </button>
       </div>

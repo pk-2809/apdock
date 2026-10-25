@@ -49,41 +49,41 @@ describe('AuthComponent', () => {
     expect(component.showConfirmPin()).toBe(true);
   });
 
-  it('should sanitize PIN input to max 4 digits and reject letters', () => {
+  it('should sanitize PIN input to max 6 digits and reject non-digits', () => {
     const inputElem = document.createElement('input');
-    inputElem.value = '12ab345';
+    inputElem.value = '12ab34567';
     const event = { target: inputElem } as unknown as Event;
 
     component.onPinInput(event);
-    expect(component.pin).toBe('1234');
-    expect(inputElem.value).toBe('1234');
+    expect(component.pin).toBe('123456');
+    expect(inputElem.value).toBe('123456');
   });
 
   it('should fail signin validation if username is missing', async () => {
     component.username = '';
-    component.pin = '1234';
+    component.pin = '849201';
     await component.handleSubmit();
     expect(component.validationError()).toContain('enter your username');
   });
 
-  it('should fail signin validation if PIN is not exactly 4 digits', async () => {
+  it('should fail signin validation if PIN is not valid 6 digits', async () => {
     component.username = 'alex';
     component.pin = '12';
     await component.handleSubmit();
-    expect(component.validationError()).toContain('exactly 4 digits');
+    expect(component.validationError()).toContain('PIN');
 
-    component.pin = '12345';
+    component.pin = '111111'; // repeating
     await component.handleSubmit();
-    expect(component.validationError()).toContain('exactly 4 digits');
+    expect(component.validationError()).toContain('same digit');
   });
 
   it('should call signInWithUsernameAndPin and navigate to /home on valid signin input', async () => {
     const spy = vi.spyOn(authService, 'signInWithUsernameAndPin').mockResolvedValue({} as any);
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     component.username = 'alex';
-    component.pin = '1234';
+    component.pin = '849201';
     await component.handleSubmit();
-    expect(spy).toHaveBeenCalledWith('alex', '1234');
+    expect(spy).toHaveBeenCalledWith('alex', '849201');
     expect(navSpy).toHaveBeenCalledWith(['/home']);
   });
 
@@ -91,38 +91,38 @@ describe('AuthComponent', () => {
     component.toggleMode('signup');
     component.name = '';
     component.email = 'alex@example.com';
-    component.pin = '1234';
-    component.confirmPin = '1234';
+    component.pin = '849201';
+    component.confirmPin = '849201';
     await component.handleSubmit();
     expect(component.validationError()).toContain('provide your name');
   });
 
-  it('should fail signup validation if email is invalid', async () => {
+  it('should fail signup validation if email is provided but invalid', async () => {
     component.toggleMode('signup');
     component.name = 'Alex';
     component.email = 'not-an-email';
-    component.pin = '1234';
-    component.confirmPin = '1234';
+    component.pin = '849201';
+    component.confirmPin = '849201';
     await component.handleSubmit();
     expect(component.validationError()).toContain('valid email');
   });
 
-  it('should fail signup validation if PIN is not exactly 4 digits', async () => {
+  it('should fail signup validation if PIN is trivial or sequential', async () => {
     component.toggleMode('signup');
     component.name = 'Alex';
     component.email = 'alex@example.com';
-    component.pin = '123';
-    component.confirmPin = '123';
+    component.pin = '123456';
+    component.confirmPin = '123456';
     await component.handleSubmit();
-    expect(component.validationError()).toContain('exactly 4 digits');
+    expect(component.validationError()).toContain('sequential series');
   });
 
   it('should fail signup validation if PINs do not match', async () => {
     component.toggleMode('signup');
     component.name = 'Alex';
     component.email = 'alex@example.com';
-    component.pin = '1234';
-    component.confirmPin = '9999';
+    component.pin = '849201';
+    component.confirmPin = '739201';
     await component.handleSubmit();
     expect(component.validationError()).toContain('PINs do not match');
   });
@@ -133,10 +133,10 @@ describe('AuthComponent', () => {
     component.toggleMode('signup');
     component.name = 'Alex River';
     component.email = 'alex@example.com';
-    component.pin = '5678';
-    component.confirmPin = '5678';
+    component.pin = '849201';
+    component.confirmPin = '849201';
     await component.handleSubmit();
-    expect(spy).toHaveBeenCalledWith('Alex River', 'alex@example.com', '5678');
+    expect(spy).toHaveBeenCalledWith('Alex River', 'alex@example.com', '849201');
     expect(navSpy).toHaveBeenCalledWith(['/home']);
   });
 });

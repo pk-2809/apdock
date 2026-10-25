@@ -13,14 +13,14 @@ apdock is an agency-grade, mobile-first Progressive Web Application (PWA) design
 
 - **Local-First Resilience**: Immediate client-side operations (UI state, schedule customizations, meal overrides, recipe rehoming) are committed to user-scoped browser storage for instant $0\text{ms}$ tactile interaction and complete offline availability.
 - **Cloud Persistence via Firestore Lite**: Remote persistence uses `firebase/firestore/lite`, executing stateless HTTP/2 REST RPCs. **Architectural Realism**: Firestore Lite does *not* support real-time WebSocket listeners (`onSnapshot`) or native IndexedDB offline persistence; it is intentionally selected to reduce JavaScript bundle overhead by ~80% compared to the full Firebase SDK. Cloud synchronizations occur explicitly at write boundaries and session hydration checkpoints.
-- **Security & Threat Model**: 4-digit PIN authentication is wrapped client-side for Firebase Auth compatibility, backed by server-side Cloud Firestore Security Rules, App Check anti-bot gating, and strict tenant isolation.
+- **Security & Threat Model**: 6-digit PIN authentication is mapped client-side to synthetic email/password credentials (`${handle}@auth.apdock.internal`) for Firebase Auth compatibility, backed by server-side Cloud Firestore Security Rules, App Check anti-bot gating, and strict tenant isolation. Zero Firestore reads occur prior to authentication.
 
 ```mermaid
 graph TD
     subgraph Client ["Client Layer • Angular 22 Zoneless PWA"]
         UI_APP["App Component<br/>(Router Outlet & Global Shell)"]
         UI_SPLASH["SplashScreenComponent<br/>(Brand Boot Animation)"]
-        UI_AUTH["AuthComponent<br/>(4-Digit PIN & Username Gen)"]
+        UI_AUTH["AuthComponent<br/>(6-Digit PIN & Username Gen)"]
         UI_HOME["HomeComponent<br/>(Greeting, Date & Lifestyle Quadrant Tiles)"]
         UI_HEADER["HeaderComponent<br/>(Settings, SwUpdate Prompt & Diet Popover)"]
         UI_DIET["DietComponent<br/>(Circular Week Queue, Slots, Meals, Veggies)"]
@@ -100,17 +100,17 @@ graph TD
 
 ### 2.2 Component Hierarchy & Responsibilities
 
-| Component | Selector | Relative Path | Key Responsibilities |
-|---|---|---|---|
-| **App Root** | `app-root` | [app.ts](../src/app/app.ts) | Application shell hosting `<router-outlet>` and `<app-splash-screen>`. |
-| **SplashScreen** | `app-splash-screen` | [splash-screen.component.ts](../src/app/components/splash-screen/splash-screen.component.ts) | 4-quadrant brand boot animation (`amber`, `emerald`, `violet`, `coral`), smooth spring fade-out on initialization. |
-| **AuthComponent** | `app-auth` | [auth.component.ts](../src/app/pages/auth/auth.component.ts) | 4-digit PIN Sign In and auto-generating Sign Up with animated 5-stage progress indicator. |
-| **HeaderComponent** | `app-header` | [header.component.ts](../src/app/components/header/header.component.ts) | Universal sticky header: user avatar, handle tag, 3-mode theme switcher, `SwUpdate` version updater, sign out, safe account deletion, and contextual **Diet Preference Popover**. |
-| **HomeComponent** | `app-home` | [home.component.ts](../src/app/pages/home/home.component.ts) | Time-calibrated greeting, live formatted date, and lifestyle quadrant module navigation tiles (Health Quadrant: Diet active, Gym planned). |
-| **DietComponent** | `app-diet` | [diet.component.ts](../src/app/pages/diet/diet.component.ts) | Core nutrition cockpit: 5-cycle circular week queue, calibrated meal timing slots, in-memory day plan caching with CSS shimmer waves, clean meals list, date-scoped vegetables checklist, and additional recipes stack. |
-| **DietPreferenceModal** | `app-diet-preference-modal` | [diet-preference-modal.component.ts](../src/app/components/diet-preference-modal/diet-preference-modal.component.ts) | Squircle-based preference modal: Goal selection (`loss` / `gain`) and Lifestyle Diet Type (`veg` / `nonveg` / `both`). Used for first-time onboarding and on-demand reconfiguration. |
-| **AddRecipeModal** | `app-add-recipe-modal` | [add-recipe-modal.component.ts](../src/app/components/add-recipe-modal/add-recipe-modal.component.ts) | Multi-destination recipe creator/editor: supports Day Meal Schedule, Additional Recipes, or Both; dynamic tag input with 49 curated whole foods & pantry staples; schedule dish removal with auto-rehoming. |
-| **MoveRecipeModal** | `app-move-recipe-modal` | [move-recipe-modal.component.ts](../src/app/components/move-recipe-modal/move-recipe-modal.component.ts) | Interactive sheet for transferring any additional recipe into Breakfast, Lunch, or Dinner on the active day, with option to edit recipe directly or apply across the schedule. |
+| Component | Selector | Relative Path | Status | Key Responsibilities |
+|---|---|---|---|---|
+| **App Root** | `app-root` | [app.ts](../src/app/app.ts) | IMPLEMENTED | Application shell hosting `<router-outlet>` and `<app-splash-screen>`. |
+| **SplashScreen** | `app-splash-screen` | [splash-screen.component.ts](../src/app/components/splash-screen/splash-screen.component.ts) | IMPLEMENTED | 4-quadrant brand boot animation (`amber`, `emerald`, `violet`, `coral`), smooth spring fade-out on initialization. |
+| **AuthComponent** | `app-auth` | [auth.component.ts](../src/app/pages/auth/auth.component.ts) | IMPLEMENTED | PIN Sign In and auto-generating Sign Up with animated progress indicator. |
+| **HeaderComponent** | `app-header` | [header.component.ts](../src/app/components/header/header.component.ts) | PARTIAL | Universal sticky header: user avatar, handle tag, 3-mode theme switcher, sign out, account deletion, and diet popover (SwUpdate PWA updater planned). |
+| **HomeComponent** | `app-home` | [home.component.ts](../src/app/pages/home/home.component.ts) | IMPLEMENTED | Time-calibrated greeting, live formatted date, and lifestyle quadrant module navigation tiles (Health Quadrant: Diet active, Gym planned). |
+| **DietComponent** | `app-diet` | [diet.component.ts](../src/app/pages/diet/diet.component.ts) | IMPLEMENTED | Core nutrition cockpit: 5-cycle circular week queue, calibrated meal timing slots, in-memory day plan caching, meals list, vegetables checklist, and additional recipes stack. |
+| **DietPreferenceModal** | `app-diet-preference-modal` | [diet-preference-modal.component.ts](../src/app/components/diet-preference-modal/diet-preference-modal.component.ts) | IMPLEMENTED | Squircle-based preference modal: Goal selection (`loss` / `gain`) and Lifestyle Diet Type (`veg` / `nonveg` / `both`). Used for first-time onboarding and on-demand reconfiguration. |
+| **AddRecipeModal** | `app-add-recipe-modal` | [add-recipe-modal.component.ts](../src/app/components/add-recipe-modal/add-recipe-modal.component.ts) | IMPLEMENTED | Multi-destination recipe creator/editor: supports Day Meal Schedule, Additional Recipes, or Both; dynamic tag input with curated whole foods. |
+| **MoveRecipeModal** | `app-move-recipe-modal` | [move-recipe-modal.component.ts](../src/app/components/move-recipe-modal/move-recipe-modal.component.ts) | IMPLEMENTED | Interactive sheet for transferring any additional recipe into Breakfast, Lunch, or Dinner on the active day, with option to edit recipe directly or apply across the schedule. |
 
 ---
 
@@ -119,21 +119,29 @@ graph TD
 ### 3.1 `AuthService` (`src/app/core/services/auth.service.ts`)
 The identity and session backbone of apdock:
 - **Firebase Auth Lifecycle**: Listens to `onAuthStateChanged` and exposes `currentUser` and `userProfile` signals.
-- **PIN Key Wrapping Architecture & Cryptographic Threat Model**:
-  - User 4-digit PINs are transformed into Firebase-compatible password strings (`apdock_pin_${pin}_secure`).
-  - **Honest Security Analysis**: A 4-digit PIN has an absolute keyspace of exactly $10,000$ combinations ($0000 \dots 9999$). Client-side string wrapping does *not* constitute cryptographic hashing or proof against brute-force attacks if an attacker obtains the account email.
+- **PIN Key Derivation & Threat Model (Option B • Spark Tier)**:
+  - User 6-digit PINs are transformed into Firebase-compatible password strings (`apdock_pin_${pin}_secure`).
+  - **Honest Security Analysis**: Client-side string wrapping is NOT cryptographic hashing. Because Apdock operates on the Firebase Spark tier without Cloud Functions, password verification is handled by Firebase Auth Email/Password provider using synthetic client-derived credentials.
   - **Mitigation Architecture**:
-    1. **App Check Enforcement**: Web app registration with Firebase App Check (reCAPTCHA Enterprise / Cloudflare Turnstile) to ensure only genuine web clients can invoke Auth endpoints.
-    2. **Anti-Enumeration Rules**: Cloud Firestore security rules strictly prohibit unauthenticated reads on `/usernames/{username}`, preventing attackers from looking up target user emails to launch automated dictionary attacks.
-    3. **Rate Limiting & Lockout**: Progressive exponential backoff after 3 failed attempts, triggering a 15-minute temporary client/server lockout after 5 consecutive failures.
-    4. **PIN Recovery Architecture**: Verified email magic link / OTP flow allowing users to reset forgotten PINs securely.
+    1. **6-Digit PIN Minimum**: Exactly 6 digits with validation rejecting trivial PINs (e.g. `000000`, `123456`, repeating digits, or sequences), expanding the raw keyspace to $1,000,000$ combinations.
+    2. **App Check Enforcement & Spark Plan Finding**:
+       - Web app registration with Firebase App Check (`ReCaptchaV3Provider`) initialized before any Auth or Firestore calls, with debug tokens (`FIREBASE_APPCHECK_DEBUG_TOKEN = true`) for local dev (`localhost`, `127.0.0.1`) and emulator.
+       - **Enforcement Capability on Spark Tier**:
+         - **Cloud Firestore**: App Check enforcement is fully supported and enforceable on the Spark (free) plan.
+         - **Firebase Authentication**: App Check enforcement for Email/Password authentication is **not supported on the Spark plan** (requires Identity Platform / Blaze upgrade).
+         - **Residual Risk**: Direct unauthenticated bot attacks against the synthetic Firebase Auth endpoints cannot be blocked by App Check at the Auth layer on the free plan. Compensating controls: 6-digit PIN ($1,000,000$ combinations), non-trivial PIN strength validator, zero unauthenticated Firestore reads, and Firebase Auth built-in rate limiting and email enumeration protection.
+    3. **Anti-Enumeration Rules & Firebase Console Step**:
+       - Cloud Firestore security rules strictly block unauthenticated reads, preventing handle/email enumeration.
+       - **Console Step**: In Firebase Console > Authentication > Settings > User actions, verify and enable **"Email enumeration protection"** to ensure identical error responses for existing vs non-existent accounts.
+    4. **Client UX Backoff**: Progressive client-side delay for user experience. Note: client backoff is UX only and is not a cryptographic or server-side security lockout.
+    5. **Account Recovery**: (Planned) Optional verified recovery email or one-time recovery code shown once at sign-up.
 - **Safe Cascade Account Deletion Workflow**:
   To eliminate race conditions and avoid orphaned Firebase Auth accounts:
-  1. **Pre-Reauthentication**: The user re-enters their 4-digit PIN immediately prior to deletion. The client executes `reauthenticateWithCredential()`. If re-authentication fails or credentials are stale, deletion halts *before* any Firestore records are touched.
+  1. **Pre-Reauthentication**: The user re-enters their 6-digit PIN immediately prior to deletion. The client executes `reauthenticateWithCredential()`. If re-authentication fails or credentials are stale, deletion halts *before* any Firestore records are touched.
   2. **Batched Firestore Deletion**: `/users/{uid}` and `/usernames/{username}` are deleted inside a single atomic `writeBatch()`.
   3. **Auth Record Deletion**: `deleteUser(firebaseUser)` is invoked.
-  4. **User-Scoped Local Storage Purge**: All `apdock_${uid}_*` local keys and `apdock_user_${username}` are removed from the browser.
-  5. **Enterprise Cloud Function (Recommended)**: An idempotent Firebase Cloud Function callable (`deleteAccountCascade`) executing all steps server-side via the Firebase Admin SDK.
+  4. **User-Scoped Local Storage Purge**: All `apdock_${uid}_*` local keys and `apdock_profile_${uid}` are removed from the browser.
+  5. **Orphan Recovery Marker**: If `deleteUser` fails after Firestore documents are deleted, a `pending-auth-deletion` marker is recorded locally to retry deletion on next launch (best-effort on Spark tier without Admin SDK Cloud Functions).
 - **Sign-Out Protocol**:
   - Invokes `firebaseSignOut(auth)`.
   - Terminates active reactive signals (`currentUser.set(null)`, `userProfile.set(null)`).
@@ -242,12 +250,12 @@ graph TD
 ## 5. Backend Architecture, Cloud Infrastructure & Security Rules
 
 ### 5.1 Cloud Infrastructure Stack
-- **Authentication**: Firebase Authentication (Email/Password provider adapted via 4-digit PIN wrapper with App Check and anti-enumeration controls).
+- **Authentication**: Firebase Authentication (Email/Password provider adapted via 6-digit PIN wrapper with App Check and anti-enumeration controls).
 - **Database**: Cloud Firestore (using `firebase/firestore/lite` for minimal client bundle overhead).
 - **Hosting & Edge**: Firebase Hosting (Global SSD CDN, HTTP/2 multiplexing, automatic SSL).
 
 ### 5.2 Server-Side Security Rules (`firestore.rules`)
-Client-side document isolation is strictly enforced at the database layer via Cloud Firestore Security Rules:
+Client-side document isolation is strictly enforced at the database layer via Cloud Firestore Security Rules (Option B Hardened Rules):
 
 ```javascript
 rules_version = '2';
@@ -263,32 +271,85 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User Profile & Document Isolation: /users/{userId}
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
-      // Scoped user subcollections (diet customizations, workout logs, etc.)
-      match /{allSubcollections=**} {
-        allow read, write: if isOwner(userId);
-      }
+    function isValidDietPreference(pref) {
+      return pref is map
+        && pref.keys().hasOnly(['goal', 'dietType', 'updatedAt'])
+        && pref.keys().hasAll(['goal', 'dietType'])
+        && (pref.goal in ['loss', 'gain'])
+        && (pref.dietType in ['veg', 'nonveg', 'both'])
+        && (!('updatedAt' in pref) || (pref.updatedAt is string && pref.updatedAt.size() <= 50) || (pref.updatedAt is timestamp));
     }
 
-    // Username Reservation Index: /usernames/{username}
-    // Threat Model Protection:
-    // - Unauthenticated reads are BLOCKED to prevent email enumeration and PIN brute force.
-    // - Authenticated users can read handle entries to verify availability.
-    // - Only the owner matching request.auth.uid can create or delete their handle reservation.
-    // - Handle records are immutable once claimed (no arbitrary updates).
-    match /usernames/{username} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() 
+    function isValidUserDoc(data) {
+      let allowedKeys = [
+        'uid',
+        'username',
+        'displayName',
+        'email',
+        'photoURL',
+        'createdAt',
+        'lastLoginAt',
+        'themePreference',
+        'dietPreference',
+        'quadrants',
+        'pendingAuthDeletion'
+      ];
+      return data.keys().hasOnly(allowedKeys)
+        && data.keys().hasAll(['uid', 'username', 'createdAt', 'lastLoginAt'])
+        && data.uid is string && data.uid == request.auth.uid
+        && data.username is string && data.username.matches('^[a-z0-9]{3,20}$')
+        && data.createdAt is timestamp
+        && data.lastLoginAt is timestamp
+        && (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 60))
+        && (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 120))
+        && (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('themePreference' in data) || (data.themePreference in ['system', 'light', 'dark']))
+        && (!('dietPreference' in data) || isValidDietPreference(data.dietPreference))
+        && (!('quadrants' in data) || (data.quadrants is map && data.quadrants.size() <= 10))
+        && (!('pendingAuthDeletion' in data) || (data.pendingAuthDeletion is bool));
+    }
+
+    // =========================================================================
+    // Username Reservation Index: /usernames/{h}
+    // =========================================================================
+    match /usernames/{h} {
+      allow get: if isAuthenticated();
+      allow list: if false;
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.username == username;
+        && request.resource.data.createdAt == request.time
+        && h.matches('^[a-z0-9]{3,20}$');
       allow update: if false;
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
+    // =========================================================================
+    // User Profile Document: /users/{uid}
+    // =========================================================================
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if isOwner(uid)
+        && request.resource.data.createdAt == request.time
+        && isValidUserDoc(request.resource.data);
+      allow update: if isOwner(uid)
+        && isValidUserDoc(request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      // Subcollections reserved for v0.2 sync (denied for now)
+      match /{sub=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // =========================================================================
     // Default Deny Rule
+    // =========================================================================
     match /{document=**} {
       allow read, write: if false;
     }
@@ -303,7 +364,7 @@ service cloud.firestore {
 interface UserProfile {
   uid: string;                       // Firebase Auth UID
   username: string;                  // Unique handle (e.g., "alex", "alex1")
-  email: string | null;              // User email address
+  email: string | null;              // User email address (null for synthetic PIN users)
   displayName: string | null;        // Full name formatted
   photoURL: string | null;           // User avatar URL
   createdAt?: unknown;               // Firestore server timestamp
@@ -340,30 +401,28 @@ interface UserDietCustomizations {
 Acts as a unique reservation index ensuring handle uniqueness across all accounts:
 ```typescript
 interface UsernameIndexRecord {
-  uid: string;                       // Owner UID
-  username: string;                  // Lowercase handle
-  email: string;                     // Owner email (Auth-gated read)
-  displayName: string;               // Display name
-  createdAt: unknown;                // Server timestamp
+  uid: string;                       // Owner UID matching request.auth.uid
+  createdAt: unknown;                // Server timestamp (request.time)
+  // Note: No email or displayName stored here
 }
 ```
 
 ### 5.4 Multi-Tenant Storage Key Registry
 All device keys are strictly isolated by `uid` to prevent data leakage on shared devices:
 
-| Storage Key Pattern | Type | Scope & Purpose |
-|---|---|---|
-| `apdock_{uid}_diet_preference` | `DietPreference` | Active goal (`loss`/`gain`) and diet type (`veg`/`nonveg`/`both`). |
-| `apdock_{uid}_custom_recipes` | `AdditionalRecipe[]` | User-created and rehomed recipes in Additional Recipes pool. |
-| `apdock_{uid}_custom_day_meals` | `CustomDayMeal[]` | Custom dishes added directly to a specific day and slot. |
-| `apdock_{uid}_edited_day_meals` | `Record<string, EditedDayMeal>` | User modifications to standard schedule meals. |
-| `apdock_{uid}_removed_day_meals` | `string[]` | IDs of dishes removed from the schedule. |
-| `apdock_{uid}_meal_overrides_{goal}_{type}` | `Record<string, string>` | User's selected meal option IDs per `${day}_${slot}`, scoped by goal & diet type. |
-| `apdock_{uid}_checked_veggies_{YYYY_MM_DD}` | `string[]` | Date-scoped grocery checklist, auto-resetting daily at midnight. |
-| `apdock_{uid}_diet_db_version` | `string` | Version tag for stored customization schema reconciliation. |
-| `apdock_{uid}_theme_preference` | `'system' \| 'light' \| 'dark'` | User's local theme selection before cloud sync. |
-| `apdock_user_{username}` | `string` | Fast-path local handle-to-email mapping for sign-in assistance. |
-| `apdock_profile_{uid}` | `UserProfile` | Offline cached user profile document. |
+| Storage Key Pattern | Type | Scope & Purpose | Status |
+|---|---|---|---|
+| `apdock_{uid}_diet_preference` | `DietPreference` | Active goal (`loss`/`gain`) and diet type (`veg`/`nonveg`/`both`). | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_custom_recipes` | `AdditionalRecipe[]` | User-created and rehomed recipes in Additional Recipes pool. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_custom_day_meals` | `CustomDayMeal[]` | Custom dishes added directly to a specific day and slot. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_edited_day_meals` | `Record<string, EditedDayMeal>` | User modifications to standard schedule meals. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_removed_day_meals` | `string[]` | IDs of dishes removed from the schedule. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_meal_overrides_{goal}_{type}` | `Record<string, string>` | User's selected meal option IDs per `${day}_${slot}`, scoped by goal & diet type. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_checked_veggies_{YYYY_MM_DD}` | `string[]` | Date-scoped grocery checklist, auto-resetting daily at midnight. | PLANNED (Phase 2 Migration) |
+| `apdock_{uid}_diet_db_version` | `string` | Version tag for stored customization schema reconciliation. | PLANNED |
+| `apdock_{uid}_theme_preference` | `'system' \| 'light' \| 'dark'` | User's local theme selection before cloud sync. | PLANNED |
+| `apdock_user_{username}` | `string` | Fast-path local handle-to-email mapping (contains real emails). | LEGACY (Purging in Phase 1/2) |
+| `apdock_profile_{uid}` | `UserProfile` | Offline cached user profile document. | IMPLEMENTED |
 
 ---
 

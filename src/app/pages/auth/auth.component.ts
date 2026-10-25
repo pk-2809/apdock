@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService, validatePinStrength } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-auth',
@@ -49,14 +49,14 @@ export class AuthComponent {
 
   onPinInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 4);
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 6);
     this.pin = digitsOnly;
     input.value = digitsOnly;
   }
 
   onConfirmPinInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 4);
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 6);
     this.confirmPin = digitsOnly;
     input.value = digitsOnly;
   }
@@ -72,8 +72,9 @@ export class AuthComponent {
         return;
       }
 
-      if (!/^\d{4}$/.test(this.pin)) {
-        this.validationError.set('PIN must be exactly 4 digits.');
+      const pinCheck = validatePinStrength(this.pin);
+      if (!pinCheck.valid) {
+        this.validationError.set(pinCheck.reason || 'PIN must be exactly 6 digits.');
         return;
       }
 
@@ -92,13 +93,14 @@ export class AuthComponent {
       }
 
       const cleanEmail = this.email.trim();
-      if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      if (cleanEmail && (!cleanEmail.includes('@') || !cleanEmail.includes('.'))) {
         this.validationError.set('Please enter a valid email address.');
         return;
       }
 
-      if (!/^\d{4}$/.test(this.pin)) {
-        this.validationError.set('PIN must be exactly 4 digits.');
+      const pinCheck = validatePinStrength(this.pin);
+      if (!pinCheck.valid) {
+        this.validationError.set(pinCheck.reason || 'PIN must be exactly 6 digits.');
         return;
       }
 

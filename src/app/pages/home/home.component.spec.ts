@@ -24,6 +24,7 @@ describe('HomeComponent', () => {
     authService = TestBed.inject(AuthService);
     dietService = TestBed.inject(DietService);
     router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
     fixture.detectChanges();
   });
 
@@ -75,21 +76,11 @@ describe('HomeComponent', () => {
     expect(clickSpy).toHaveBeenCalledWith('gym');
   });
 
-  it('should open diet preference modal if user has no preference on clicking diet card', () => {
-    vi.spyOn(dietService, 'hasPreference').mockReturnValue(false);
-    expect(component.isDietModalOpen()).toBe(false);
-
-    component.onCardClick('diet');
-    expect(component.isDietModalOpen()).toBe(true);
-  });
-
-  it('should navigate directly to /diet if preference already exists', () => {
-    vi.spyOn(dietService, 'hasPreference').mockReturnValue(true);
+  it('should navigate directly to /diet on clicking diet card', () => {
     const navSpy = vi.spyOn(router, 'navigate');
 
     component.onCardClick('diet');
     expect(navSpy).toHaveBeenCalledWith(['/diet']);
-    expect(component.isDietModalOpen()).toBe(false);
   });
 
   it('should navigate to /diet and close modal onDietPreferenceSaved', () => {

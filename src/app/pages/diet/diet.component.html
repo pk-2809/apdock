@@ -1,38 +1,286 @@
-<div class="diet-layout">
-  <!-- Reusable App Header with Diet Preference Popover in header -->
-  <app-header></app-header>
-
-  <!-- Ambient Brand Aura Blobs -->
-  <div class="diet-aura" aria-hidden="true">
-    <div class="aura-blob blob-emerald"></div>
-    <div class="aura-blob blob-cyan"></div>
-  </div>
+<div class="diet-layout" [class.modal-active]="isAddRecipeModalOpen() || isDietModalOpen()">
+  <!-- Reusable App Header -->
+  <app-header [inDietModule]="true"></app-header>
 
   <main class="diet-main" role="main">
     <div class="diet-container">
-      <!-- Minimal Navigation: Back to Home -->
-      <div class="diet-top-nav">
+
+      <!-- Top Navigation Row -->
+      <nav class="diet-top-nav" aria-label="Breadcrumb navigation">
         <button
           type="button"
           class="nav-back-btn"
           (click)="goBack()"
-          aria-label="Back to home screen"
+          aria-label="Back to home"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2.3"
+            stroke-width="2.2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="back-svg"
+            class="nav-icon"
           >
             <path d="m15 18-6-6 6-6" />
           </svg>
-          <span class="back-text">Home</span>
+          <span>Home</span>
         </button>
-      </div>
+      </nav>
+
+      <!-- 1. DAY COMES FIRST: Circular Queue Week Tab List -->
+      <section class="week-queue-section" aria-label="Select day of the week">
+        <div
+          #weekScrollContainer
+          class="week-queue-track"
+          role="tablist"
+        >
+          @for (day of circularDays(); track day.globalIndex) {
+            <button
+              type="button"
+              role="tab"
+              class="day-chip"
+              [class.active]="day.globalIndex === selectedGlobalIndex()"
+              [class.is-today]="day.isToday"
+              [attr.data-global-index]="day.globalIndex"
+              [attr.aria-selected]="day.globalIndex === selectedGlobalIndex()"
+              (click)="selectCircularDay(day)"
+            >
+              <span class="day-chip-name">{{ day.label }}</span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- 2. MEAL TIMING COMES NEXT: Exactly 3 Options (Breakfast, Lunch, Dinner) -->
+      <section class="timing-tabs-section" aria-label="Select meal">
+        <div class="segmented-bar" role="tablist">
+          @for (tab of slotTabs; track tab.id) {
+            <button
+              type="button"
+              role="tab"
+              class="segmented-btn"
+              [class.active]="activeSlotFilter() === tab.id"
+              [attr.aria-selected]="activeSlotFilter() === tab.id"
+              (click)="setSlotFilter(tab.id)"
+            >
+              <span class="tab-label">{{ tab.label }}</span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- 3. SIMPLE READ-ONLY LIST: Meals -->
+      <section class="meal-options-section" aria-label="Meals">
+        <div class="options-panel">
+          <div class="options-panel-header">
+            <h2 class="options-panel-title">Meals</h2>
+            <button
+              type="button"
+              id="btnAddMealRecipeTrigger"
+              class="btn-add-recipe"
+              (click)="openAddRecipeModal('day_meal')"
+              aria-label="Add meal recipe"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add Recipe</span>
+            </button>
+          </div>
+
+          <!-- Shimmer Skeleton Loader when fetching day data asynchronously -->
+          @if (isLoadingDay()) {
+            <div class="skeleton-options-list" aria-busy="true" aria-label="Loading options">
+              <div class="skeleton-card shimmer-wave">
+                <div class="sk-line sk-title"></div>
+                <div class="sk-line sk-body"></div>
+              </div>
+              <div class="skeleton-card shimmer-wave">
+                <div class="sk-line sk-title"></div>
+                <div class="sk-line sk-body"></div>
+              </div>
+            </div>
+          } @else {
+            <div class="options-list ease-in">
+              @for (dish of slotOptions(); track dish.id; let idx = $index) {
+                <article
+                  class="dish-card clickable"
+                  (click)="openEditScheduleRecipeModal(dish)"
+                  tabindex="0"
+                  role="button"
+                  [attr.aria-label]="'Edit ' + dish.name + ' in schedule'"
+                >
+                  <div class="dish-card-header">
+                    <div class="dish-title-group">
+                      <span class="dish-num-badge">0{{ idx + 1 }}</span>
+                      <h3 class="dish-name">{{ dish.name }}</h3>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- 4. REQUIRED VEGETABLES (All Day) -->
+      <section class="panel-section" aria-labelledby="veggiesSectionHeading">
+        <div class="panel-header">
+          <div>
+            <h2 id="veggiesSectionHeading" class="panel-title">Vegetables Required</h2>
+            <span class="panel-subtitle">All Day</span>
+          </div>
+        </div>
+
+        @if (isLoadingDay()) {
+          <div class="skeleton-veggies" aria-busy="true">
+            <div class="skeleton-veg-row shimmer-wave"></div>
+            <div class="skeleton-veg-row shimmer-wave"></div>
+            <div class="skeleton-veg-row shimmer-wave"></div>
+          </div>
+        } @else {
+          <div class="veggies-list ease-in">
+            @for (veg of displayedVeggies(); track veg.name) {
+              <div class="veg-item-card">
+                <span class="veg-item-name">{{ veg.name }}</span>
+                <span class="veg-item-category">{{ veg.category }}</span>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- 5. ADDITIONAL RECIPES -->
+      <section class="panel-section" aria-labelledby="recipesSectionHeading">
+        <div class="panel-header-simple">
+          <h2 id="recipesSectionHeading" class="panel-title">Additional Recipes</h2>
+          <button
+            type="button"
+            id="btnAddAdditionalRecipeTrigger"
+            class="btn-add-recipe"
+            (click)="openAddRecipeModal('additional')"
+            aria-label="Add custom recipe"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Recipe</span>
+          </button>
+        </div>
+
+        <div class="recipes-stack">
+          @for (recipe of additionalRecipes(); track recipe.id) {
+            <article
+              class="clean-recipe-card clickable"
+              (click)="openRecipeModal(recipe)"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'Move ' + recipe.title + ' to day meal schedule'"
+            >
+              <h3 class="recipe-name">{{ recipe.title }}</h3>
+
+              <!-- Key Ingredients / Bottom Veggies Only -->
+              <div class="recipe-ingredients-strip">
+                @for (ing of recipe.keyIngredients; track ing) {
+                  <span class="recipe-ing-item">{{ ing }}</span>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
     </div>
   </main>
+
+  <!-- Diet Preference Modal -->
+  <app-diet-preference-modal
+    [isOpen]="isDietModalOpen()"
+    (close)="closeDietModal()"
+    (saved)="onDietPreferenceSaved()"
+  ></app-diet-preference-modal>
+
+  <!-- Add / Edit Recipe Sheet / Popup Modal -->
+  <app-add-recipe-modal
+    [isOpen]="isAddRecipeModalOpen()"
+    [mode]="modalMode()"
+    [editingMeal]="editingMeal() || undefined"
+    [editingAdditionalRecipe]="editingAdditionalRecipe() || undefined"
+    [initialDestination]="addRecipeModalTarget()"
+    [initialSlot]="addRecipeModalSlot()"
+    [activeDay]="selectedDay()"
+    (close)="closeAddRecipeModal()"
+    (added)="onRecipeAdded($event)"
+    (updated)="onRecipeUpdated($event)"
+    (updatedAdditional)="onAdditionalRecipeUpdated($event)"
+    (removed)="removeRecipeFromSchedule($event)"
+    (deletedAdditional)="onAdditionalRecipeDeleted($event)"
+  ></app-add-recipe-modal>
+
+  <!-- Move Recipe to Day Meal Modal -->
+  @if (activeRecipeModal(); as activeRecipe) {
+    <app-move-recipe-modal
+      [recipe]="activeRecipe"
+      [activeDay]="selectedDay()"
+      [activeSlot]="activeSlotFilter()"
+      (close)="closeRecipeModal()"
+      (edit)="openEditAdditionalRecipeModal($event)"
+      (moved)="onRecipeMovedToSchedule($event)"
+    ></app-move-recipe-modal>
+  }
+
+  <!-- Toast Notification -->
+  @if (toastNotification(); as toast) {
+    <div class="toast-popup" role="status" aria-live="polite">
+      <div class="toast-icon-badge" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <div class="toast-content">
+        <span class="toast-title">{{ toast.title }}</span>
+        @if (toast.subtitle) {
+          <span class="toast-subtitle">{{ toast.subtitle }}</span>
+        }
+      </div>
+    </div>
+  }
 </div>

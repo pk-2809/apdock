@@ -1,0 +1,164 @@
+<div
+  class="modal-backdrop"
+  (click)="onBackdropClick($event)"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="moveRecipeModalTitle"
+>
+  <div class="modal-sheet" (click)="$event.stopPropagation()">
+    <!-- Header: Dish as Hero Subject -->
+    <header class="sheet-header">
+      <div class="header-top-row">
+        <span class="eyebrow-badge">ADD TO {{ activeDay.toUpperCase() }}</span>
+        <span
+          class="diet-pill"
+          [class.is-veg]="recipe.dietType === 'veg'"
+          [class.is-nonveg]="recipe.dietType === 'nonveg'"
+        >
+          @if (recipe.dietType === 'nonveg') {
+            <span class="diet-dot nonveg-dot" aria-hidden="true"></span>
+            <span>Non-Veg</span>
+          } @else {
+            <span class="diet-dot veg-dot" aria-hidden="true"></span>
+            <span>Veg</span>
+          }
+        </span>
+      </div>
+
+      <h2 id="moveRecipeModalTitle" class="sheet-dish-title">{{ recipe.title }}</h2>
+
+      @if (recipe.keyIngredients && recipe.keyIngredients.length > 0) {
+        <p class="sheet-dish-ingredients">{{ recipe.keyIngredients.join(' · ') }}</p>
+      }
+    </header>
+
+    <!-- Body: Only Meal Time Selection (Auto-set to current day) -->
+    <div class="sheet-body">
+      <div class="form-section">
+        <label class="section-label">SELECT MEAL TIME</label>
+        <div class="slot-segmented-grid" role="radiogroup" aria-label="Meal time">
+          <button
+            type="button"
+            class="slot-btn"
+            [class.active]="selectedSlot() === 'breakfast'"
+            (click)="setSlot('breakfast')"
+          >
+            <svg
+              class="slot-svg"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 2v4M4.93 10.93l2.83-2.83M2 18h20M20 18a8 8 0 0 0-16 0" />
+            </svg>
+            <span class="slot-name">Breakfast</span>
+          </button>
+
+          <button
+            type="button"
+            class="slot-btn"
+            [class.active]="selectedSlot() === 'lunch'"
+            (click)="setSlot('lunch')"
+          >
+            <svg
+              class="slot-svg"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+            <span class="slot-name">Lunch</span>
+          </button>
+
+          <button
+            type="button"
+            class="slot-btn"
+            [class.active]="selectedSlot() === 'dinner'"
+            (click)="setSlot('dinner')"
+          >
+            <svg
+              class="slot-svg"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+            <span class="slot-name">Dinner</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions (Uniform 48px Height) -->
+    <footer class="sheet-footer">
+      <div class="footer-primary-row">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="closeModal()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="btnConfirmMoveRecipe"
+          class="btn-submit"
+          (click)="confirmMove()"
+        >
+          <span>Move to Schedule</span>
+        </button>
+      </div>
+
+      <div class="footer-link-row">
+        <button
+          type="button"
+          id="btnFooterEditRecipe"
+          class="link-edit-recipe"
+          (click)="onEdit()"
+          title="Edit or delete this recipe"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            <path d="m15 5 4 4" />
+          </svg>
+          <span>Edit or Delete Recipe</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>

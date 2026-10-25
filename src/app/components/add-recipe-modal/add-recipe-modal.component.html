@@ -1,0 +1,417 @@
+@if (isOpen) {
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    (touchmove)="onBackdropTouchMove($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="addRecipeModalTitle"
+  >
+    <div class="sheet-modal-card" (click)="$event.stopPropagation()">
+      <!-- Header: Premium & Clean (No draggers) -->
+      <header class="sheet-header">
+        <div class="sheet-title-group">
+          <div class="title-icon-badge" aria-hidden="true">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+              <line x1="6" y1="17" x2="18" y2="17" />
+            </svg>
+          </div>
+          <div class="sheet-title-text">
+            <h2 id="addRecipeModalTitle" class="sheet-title">{{ mode === 'edit' ? 'Edit Recipe' : 'Add Recipe' }}</h2>
+            <p class="sheet-subtitle">{{ contextSubtitle() }}</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Form Body -->
+      <div class="sheet-body">
+
+        <!-- Field: Recipe Name (Auto-wrapping to display full content without scroll or ellipsis) -->
+        <div class="form-group">
+          <label for="recipeNameInput" class="form-label">RECIPE NAME</label>
+          <textarea
+            #nameInput
+            id="recipeNameInput"
+            rows="1"
+            class="form-input form-textarea"
+            placeholder="e.g., Herb Grilled Paneer Skewers"
+            [ngModel]="recipeName()"
+            (ngModelChange)="onRecipeNameChange($event)"
+            (input)="adjustNameInputHeight()"
+            (focus)="onInputFocus($event)"
+            (keydown.enter)="$event.preventDefault()"
+            autocomplete="off"
+          ></textarea>
+        </div>
+
+        <!-- Field: Diet Preference (Only Veg & Non-Veg) -->
+        <div class="form-group">
+          <label class="form-label">DIET PREFERENCE</label>
+          <div class="type-segmented-row" role="radiogroup" aria-label="Diet preference">
+            <button
+              type="button"
+              class="type-seg-btn is-veg"
+              [class.active]="selectedDietType() === 'veg'"
+              (click)="setDietType('veg')"
+            >
+              <svg
+                class="diet-icon veg-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
+              <span>Veg</span>
+            </button>
+            <button
+              type="button"
+              class="type-seg-btn is-nonveg"
+              [class.active]="selectedDietType() === 'nonveg'"
+              (click)="setDietType('nonveg')"
+            >
+              <svg
+                class="diet-icon nonveg-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m15.4 15.4 4.2-4.2a6 6 0 0 0-8.5-8.5l-4.2 4.2a6 6 0 0 0 8.5 8.5Z" />
+                <path d="m8.5 15.5-3.5 3.5" />
+                <circle cx="4" cy="20" r="1.5" />
+                <circle cx="6" cy="22" r="1.5" />
+              </svg>
+              <span>Non-Veg</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Field: Ingredients with Autocomplete -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="ingredientSearchInput" class="form-label">INGREDIENTS</label>
+            <span class="label-counter">{{ ingredients().length }} added</span>
+          </div>
+
+          <!-- Dedicated Search Field with Anchored Autocomplete Dropdown -->
+          <div class="search-field-container">
+            <div class="ingredient-search-wrapper" [class.is-focused]="isDropdownOpen()">
+              <svg
+                class="search-input-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                #searchInput
+                id="ingredientSearchInput"
+                type="text"
+                class="search-full-input"
+                placeholder="Search ingredients..."
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event); onSearchInput()"
+                (focus)="onInputFocus($event); onSearchFocus()"
+                (blur)="onSearchBlur()"
+                (keydown)="onSearchKeydown($event)"
+                autocomplete="off"
+              />
+              @if (searchQuery()) {
+                <button
+                  type="button"
+                  class="search-clear-btn"
+                  (click)="clearSearchQuery($event)"
+                  aria-label="Clear search input"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              }
+            </div>
+
+            <!-- Autocomplete Options Dropdown (Anchored directly to search bar) -->
+            @if (isDropdownOpen() && filteredIngredients().length > 0) {
+              <ul
+                class="autocomplete-dropdown"
+                role="listbox"
+                id="ingredientsAutocompleteList"
+                aria-label="Suggested ingredients"
+              >
+                @for (item of filteredIngredients(); track item; let idx = $index) {
+                  <li
+                    role="option"
+                    class="autocomplete-item"
+                    [class.focused]="focusedIndex() === idx"
+                    (mousedown)="selectIngredient(item)"
+                  >
+                    <span class="item-name">{{ item }}</span>
+                    <span class="item-badge-action">+ Add</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <!-- Selected Chips Area (Name and cross button perfectly centered!) -->
+          @if (ingredients().length > 0) {
+            <div class="selected-chips-grid">
+              @for (ing of ingredients(); track ing) {
+                <span class="ingredient-chip">
+                  <span class="chip-label">{{ ing }}</span>
+                  <button
+                    type="button"
+                    class="chip-remove-btn"
+                    (click)="removeIngredient(ing)"
+                    [attr.aria-label]="'Remove ' + ing"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Error Alert -->
+        @if (errorMessage()) {
+          <div class="error-banner" role="alert">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer Buttons: Uniform Height & Clear Spacing -->
+      <footer class="sheet-footer">
+        <div class="footer-primary-row">
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="closeModal()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            id="btnSaveRecipe"
+            class="btn-submit"
+            (click)="submitRecipe()"
+          >
+            @if (mode === 'edit') {
+              <span>Save</span>
+            } @else {
+              <span>Add</span>
+            }
+          </button>
+        </div>
+
+        <!-- Clean Text Link: Move to Additional (for schedule meals) or Delete Recipe (for additional recipes) -->
+        @if (mode === 'edit') {
+          <div class="footer-link-row">
+            @if (editingAdditionalRecipe) {
+              <button
+                type="button"
+                id="btnDeleteRecipe"
+                class="link-remove-schedule btn-delete-recipe"
+                (click)="promptRemoveFromSchedule()"
+                title="Delete recipe from Additional Recipes"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>Delete Recipe</span>
+              </button>
+            } @else {
+              <button
+                type="button"
+                id="btnRemoveFromSchedule"
+                class="link-remove-schedule btn-remove-schedule"
+                (click)="promptRemoveFromSchedule()"
+                title="Remove from schedule and move to Additional Recipes"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>Move to Additional</span>
+              </button>
+            }
+          </div>
+        }
+      </footer>
+    </div>
+
+    <!-- Confirm Remove / Delete Popup Dialog (Simple, Standard English) -->
+    @if (isConfirmRemoveOpen()) {
+      <div
+        class="confirm-dialog-backdrop"
+        (click)="cancelRemoveFromSchedule()"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirmDialogTitle"
+      >
+        <div class="confirm-dialog-card" (click)="$event.stopPropagation()">
+          <div
+            class="confirm-icon-badge"
+            [class.danger-badge]="!!editingAdditionalRecipe"
+            aria-hidden="true"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
+          </div>
+
+          <div class="confirm-text-group">
+            <h3 id="confirmDialogTitle" class="confirm-title">
+              {{ editingAdditionalRecipe ? 'Delete Recipe?' : 'Remove from Schedule?' }}
+            </h3>
+            <p class="confirm-message">
+              {{ editingAdditionalRecipe ? 'Are you sure you want to delete this recipe from Additional Recipes?' : 'Move this recipe to Additional Recipes?' }}
+            </p>
+          </div>
+
+          <div class="confirm-action-buttons">
+            <button
+              type="button"
+              class="btn-confirm-cancel"
+              (click)="cancelRemoveFromSchedule()"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="btnConfirmRemove"
+              class="btn-confirm-remove"
+              [class.btn-confirm-danger]="!!editingAdditionalRecipe"
+              (click)="onRemoveFromSchedule()"
+            >
+              {{ editingAdditionalRecipe ? 'Delete' : 'Remove' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

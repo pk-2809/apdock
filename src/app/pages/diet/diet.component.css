@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Diet Page Layout
+   Diet Module • Circular Queue & Minimal Smooth UI
    ========================================================================== */
 
 .diet-layout {
@@ -12,54 +12,24 @@
   color: var(--text-primary);
   overflow-x: hidden;
   box-sizing: border-box;
-  padding-bottom: calc(var(--sab, 0px) + 32px);
+  padding-bottom: calc(var(--sab, 0px) + 36px);
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Background Ambient Glow */
-.diet-aura {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+.diet-layout.modal-active {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
-.aura-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.16;
-}
-
-[data-theme='light'] .aura-blob {
-  opacity: 0.12;
-}
-
-.blob-emerald {
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(circle, #30d158 0%, rgba(48, 209, 88, 0) 70%);
-  top: -80px;
-  right: -80px;
-}
-
-.blob-cyan {
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, #00c6ff 0%, rgba(0, 198, 255, 0) 70%);
-  bottom: 10%;
-  left: -80px;
-}
-
-/* Main Content Wrapper */
+/* Main Container */
 .diet-main {
   flex: 1;
   position: relative;
   z-index: 1;
   display: flex;
   justify-content: center;
-  padding: 16px 16px 32px 16px;
+  padding: 16px 16px 28px 16px;
   box-sizing: border-box;
 }
 
@@ -68,15 +38,15 @@
   max-width: 480px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Top Navigation Bar */
 .diet-top-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-top: 4px;
+  justify-content: space-between;
+  padding: 0;
 }
 
 .nav-back-btn {
@@ -86,27 +56,820 @@
   background: var(--btn-bg);
   border: 1px solid var(--btn-border);
   color: var(--text-primary);
-  padding: 8px 14px;
+  padding: 7px 13px;
   border-radius: 9999px;
   font-family: var(--font-sans);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  outline: none !important;
-  -webkit-tap-highlight-color: transparent !important;
+  outline: none;
 }
 
 .nav-back-btn:hover {
   background: var(--btn-hover-bg);
-  transform: translateX(-2px);
 }
 
-.nav-back-btn:active {
-  transform: scale(0.96);
+.nav-icon {
+  flex-shrink: 0;
 }
 
-.back-svg {
-  width: 16px;
+
+
+/* ==========================================================================
+   1. Circular Queue Week Tab List (Always Monday after Sunday, Single Clean Day Label)
+   ========================================================================== */
+
+.week-queue-section {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 0 -16px;
+  padding: 0;
+  overflow: visible;
+}
+
+.week-queue-track {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  /* Centering padding so the active day sits in the exact middle with ample room */
+  padding: 0 calc(50% - 31px);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.week-queue-track::-webkit-scrollbar {
+  display: none;
+}
+
+.day-chip {
+  flex: 0 0 62px;
+  width: 62px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-card);
+  border-radius: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  scroll-snap-align: center;
+  scroll-snap-stop: normal;
+  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  position: relative;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.day-chip:hover:not(.active) {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--text-primary);
+}
+
+/* Selected state: buttery smooth, rounded 16px squircle */
+.day-chip.active {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  z-index: 2;
+}
+
+.day-chip:active {
+  transform: scale(0.93);
+}
+
+.day-chip-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.day-chip.active .day-chip-name {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   2. Meal Timing Selector: Exactly 3 Options (Breakfast, Lunch, Dinner)
+   ========================================================================== */
+
+.timing-tabs-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.segmented-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.segmented-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.segmented-btn:hover {
+  color: var(--text-primary);
+}
+
+.segmented-btn.active {
+  background: var(--btn-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-card);
+}
+
+[data-theme='dark'] .segmented-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-label {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   3. Options List for Selected Meal (Minimal, Low-Gradient)
+   ========================================================================== */
+
+.meal-options-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.options-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.options-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.options-panel-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dish-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 64px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dish-card.clickable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dish-card.clickable:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.035);
+  transform: translateY(-1px);
+}
+
+.dish-card.clickable:active {
+  transform: scale(0.985);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.dish-card.clickable:focus-visible {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.dish-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.dish-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dish-num-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.dish-name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.45;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* ==========================================================================
+   Smooth Shimmers & Zero Layout Shift
+   ========================================================================== */
+
+.ease-in {
+  animation: easeFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes easeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shimmer-wave {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerMove 1.5s infinite linear;
+}
+
+[data-theme='light'] .shimmer-wave {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.03) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.03) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmerMove {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-card {
+  height: 98px;
+  border-radius: 16px;
+  border: 1px solid var(--border-card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.sk-line {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='light'] .sk-line {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.sk-title {
+  width: 35%;
+  height: 12px;
+}
+
+.sk-body {
+  width: 75%;
   height: 16px;
+}
+
+.sk-meta {
+  width: 50%;
+  height: 12px;
+}
+
+.skeleton-veggies {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-veg-row {
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--border-card);
+}
+
+/* ==========================================================================
+   4. Required Vegetables Section (All Day, Clean Read-Only Cards)
+   ========================================================================== */
+
+.panel-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel-header-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-add-recipe {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-add-recipe:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #34d399;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.btn-add-recipe:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.panel-subtitle {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Clean Read-Only Vegetables List */
+.veggies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.veg-item-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 66px;
+  gap: 4px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-sizing: border-box;
+}
+
+.veg-item-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.veg-item-category {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   5. Additional Recipes Stack (All Recipes, Name + Bottom Veggies Only)
+   ========================================================================== */
+
+.recipes-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clean-recipe-card {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 16px 18px;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clean-recipe-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(30, 41, 59, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.clean-recipe-card:active {
+  transform: scale(0.99);
+}
+
+.recipe-name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.recipe-ingredients-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recipe-ing-item {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--btn-bg);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   Recipe Modal (Clean & Minimal)
+   ========================================================================== */
+
+.clean-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.clean-modal-content {
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 22px 22px 0 0;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.25);
+  animation: modalSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-sub-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  text-transform: uppercase;
+}
+
+.modal-heading {
+  margin: 2px 0 0 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.modal-close-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.modal-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-block-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modal-pills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.modal-pill {
+  font-size: 11.5px;
+  color: var(--text-primary);
+  background: var(--btn-bg);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.steps-ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--btn-bg);
+  border-radius: 10px;
+  padding: 9px 11px;
+}
+
+.step-index {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.modal-done-action {
+  width: 100%;
+  height: 42px;
+  background: var(--text-primary);
+  color: var(--bg-deep);
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+/* Toast */
+.clean-toast {
+  position: fixed;
+  bottom: calc(var(--sab, 0px) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1000;
+}
+
+.toast-check {
+  flex-shrink: 0;
+}
+
+/* Toast Notification: Apple / Dynamic Island Floating Card */
+.toast-popup {
+  position: fixed;
+  bottom: calc(var(--sab, 0px) + 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #f8fafc;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 10px 18px 10px 12px;
+  border-radius: 14px;
+  font-family: var(--font-sans);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75), 0 0 18px rgba(16, 185, 129, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1200;
+  animation: toastSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width: auto;
+  min-width: 270px;
+  max-width: min(92vw, 380px);
+  box-sizing: border-box;
+}
+
+[data-theme='light'] .toast-popup {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.18), 0 0 18px rgba(16, 185, 129, 0.15);
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.toast-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme='light'] .toast-icon-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.toast-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.25;
+  text-align: left;
+}
+
+[data-theme='light'] .toast-title {
+  color: #0f172a;
+}
+
+.toast-subtitle {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+[data-theme='light'] .toast-subtitle {
+  color: #64748b;
 }

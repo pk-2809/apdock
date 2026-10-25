@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, OnInit, OnChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DietService, DietGoal, DietType } from '../../core/services/diet.service';
 
@@ -9,7 +9,7 @@ import { DietService, DietGoal, DietType } from '../../core/services/diet.servic
   templateUrl: './diet-preference-modal.component.html',
   styleUrl: './diet-preference-modal.component.css'
 })
-export class DietPreferenceModalComponent {
+export class DietPreferenceModalComponent implements OnInit, OnChanges, OnDestroy {
   private readonly dietService = inject(DietService);
 
   @Input() isOpen = false;
@@ -103,7 +103,49 @@ export class DietPreferenceModalComponent {
     }
   }
 
+  ngOnChanges(): void {
+    if (this.isOpen) {
+      this.lockBodyScroll();
+    } else {
+      this.unlockBodyScroll();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBodyScroll();
+  }
+
+  private savedScrollY = 0;
+
+  private lockBodyScroll(): void {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      this.savedScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      document.documentElement.classList.add('modal-open');
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    }
+  }
+
+  private unlockBodyScroll(): void {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.documentElement.classList.remove('modal-open');
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      if (this.savedScrollY > 0 && typeof window.scrollTo === 'function') {
+        try {
+          window.scrollTo({
+            top: this.savedScrollY,
+            behavior: 'instant' as ScrollBehavior
+          });
+        } catch {}
+      }
+    }
+  }
+
   onDismiss(): void {
+    this.unlockBodyScroll();
     this.close.emit();
   }
 }
