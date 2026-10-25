@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { SplashScreenComponent } from './components/splash-screen/splash-screen.component';
 import { ThemeService, ThemeMode } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,7 @@ import { AuthService } from './core/services/auth.service';
 })
 export class App {
   readonly auth = inject(AuthService);
+  readonly pwaUpdate = inject(PwaUpdateService);
   private readonly themeService = inject(ThemeService);
 
   readonly showSplash = signal<boolean>(true);

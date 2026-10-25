@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { DietService, DietGoal, DietType } from '../../core/services/diet.service';
+import { PwaUpdateService } from '../../core/services/pwa-update.service';
 import { DietPreferenceModalComponent } from '../diet-preference-modal/diet-preference-modal.component';
 
 @Component({
@@ -29,6 +30,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly auth = inject(AuthService);
   readonly themeService = inject(ThemeService);
   readonly dietService = inject(DietService);
+  readonly pwaUpdate = inject(PwaUpdateService);
+  readonly appVersion = this.pwaUpdate.appVersion;
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
   private routerSub?: Subscription;
@@ -222,68 +225,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     this.isCheckingUpdate.set(true);
     this.isUpdateError.set(false);
-    this.updateStatusMessage.set('Checking for latest build...');
-
-    if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
-      this.isCheckingUpdate.set(false);
-      this.isUpdateError.set(true);
-      this.updateStatusMessage.set('Device is offline. Connect to internet to update.');
-      return;
-    }
+    this.updateStatusMessage.set('Checking for updates...');
 
     try {
-      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-        try {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          for (const registration of registrations) {
-            await registration.update();
-            if (registration.waiting) {
-              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-          }
-        } catch (swErr) {
-          console.warn('ServiceWorker update check:', swErr);
-        }
+      const result = await this.pwaUpdate.checkForUpdate();
+      if (result === 'ready') {
+        this.updateStatusMessage.set('Update ready - Reload');
+      } else if (result === 'up-to-date') {
+        this.updateStatusMessage.set("You're up to date");
+      } else {
+        this.isUpdateError.set(true);
+        this.updateStatusMessage.set("You're offline");
       }
-
-      if (typeof window !== 'undefined' && 'caches' in window) {
-        try {
-          const cacheKeys = await window.caches.keys();
-          await Promise.all(cacheKeys.map((key) => window.caches.delete(key)));
-        } catch (cacheErr) {
-          console.warn('CacheStorage purge check:', cacheErr);
-        }
-      }
-
-      this.updateStatusMessage.set('Applying latest build & refreshing...');
-
-      if (typeof window !== 'undefined') {
-        try {
-          await fetch('/?_pwa_bust=' + Date.now(), {
-            cache: 'reload',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              Pragma: 'no-cache'
-            }
-          });
-        } catch {}
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      this.reloadWindow();
     } catch {
       this.isUpdateError.set(true);
-      this.updateStatusMessage.set('Could not check updates. Please retry.');
+      this.updateStatusMessage.set("You're offline");
+    } finally {
       this.isCheckingUpdate.set(false);
     }
   }
 
-  reloadWindow(): void {
-    if (typeof window !== 'undefined' && window.location) {
-      try {
-        window.location.reload();
-      } catch {}
-    }
+  applyUpdate(): void {
+    this.pwaUpdate.applyUpdate();
   }
 
   @HostListener('document:click', ['$event'])

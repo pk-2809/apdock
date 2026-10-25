@@ -291,7 +291,10 @@
 
           <!-- PWA Updates Section -->
           <div class="dropdown-section">
-            <span class="dropdown-section-label">Application</span>
+            <div class="dropdown-section-header">
+              <span class="dropdown-section-label">Application</span>
+              <span class="dropdown-version-tag">v{{ appVersion() }}</span>
+            </div>
             <button
               id="checkForUpdatesBtn"
               type="button"
@@ -319,11 +322,17 @@
                 <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
                 <path d="M16 16h5v5" />
               </svg>
-              <span>{{ isCheckingUpdate() ? 'Updating...' : 'Check for Updates' }}</span>
+              <span>{{ isCheckingUpdate() ? 'Checking...' : 'Check for Updates' }}</span>
             </button>
 
             @if (updateStatusMessage()) {
-              <div class="update-feedback-pill" [class.error-state]="isUpdateError()" role="status">
+              <div
+                class="update-feedback-pill"
+                [class.error-state]="isUpdateError()"
+                [class.ready-state]="updateStatusMessage()?.includes('Reload')"
+                (click)="updateStatusMessage()?.includes('Reload') ? applyUpdate() : null"
+                role="status"
+              >
                 <span class="feedback-pulse" [class.error-pulse]="isUpdateError()" aria-hidden="true"></span>
                 <span>{{ updateStatusMessage() }}</span>
               </div>

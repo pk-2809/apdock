@@ -67,5 +67,40 @@
 
     <!-- Main Navigation View -->
     <router-outlet />
+
+    <!-- Non-blocking PWA Update Toast -->
+    @if (pwaUpdate.updateAvailable()) {
+      <aside class="pwa-update-toast" role="status" aria-live="polite">
+        <div class="toast-body">
+          <span class="toast-pulse-dot" aria-hidden="true"></span>
+          <span class="toast-msg">New version ready</span>
+        </div>
+        <button
+          type="button"
+          class="toast-reload-btn"
+          (click)="pwaUpdate.applyUpdate()"
+          aria-label="Reload application with newest build"
+        >
+          Reload
+        </button>
+      </aside>
+    }
+
+    @if (pwaUpdate.updateFailed()) {
+      <aside class="pwa-update-toast toast-error" role="alert">
+        <div class="toast-body">
+          <span class="toast-pulse-dot error-dot" aria-hidden="true"></span>
+          <span class="toast-msg">Update failed</span>
+        </div>
+        <button
+          type="button"
+          class="toast-reload-btn"
+          (click)="pwaUpdate.retryUpdate()"
+          aria-label="Retry update and reload"
+        >
+          Reload
+        </button>
+      </aside>
+    }
   </div>
 }
