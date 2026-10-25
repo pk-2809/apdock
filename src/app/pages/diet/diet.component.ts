@@ -125,7 +125,7 @@ export class DietComponent implements OnInit, AfterViewInit {
   // Backend day data fetching & caching
   // 1 day data is fetched once; switching days loads on-demand with shimmers and zero layout shift
   private readonly cachedDayPlans = new Map<string, DayDietPlan>();
-  readonly isLoadingDay = signal<boolean>(false);
+  readonly isLoadingDay = signal<boolean>(true);
   readonly activeDayPlan = signal<DayDietPlan>(
     this.dietService.getDayPlan(this.todayDayName, this.currentGoal(), this.currentDietType())
   );
@@ -205,9 +205,8 @@ export class DietComponent implements OnInit, AfterViewInit {
       this.isDietModalOpen.set(true);
     }
 
-    // Cache initial day data
-    const initialKey = this.getCacheKey(this.todayDayName);
-    this.cachedDayPlans.set(initialKey, this.activeDayPlan());
+    // Load initial day data asynchronously (dynamic import of DIET_DATABASE) with shimmer
+    this.loadInitialDayPlan();
 
     // Resume handling on visibilitychange to visible
     if (typeof document !== 'undefined') {
@@ -218,6 +217,22 @@ export class DietComponent implements OnInit, AfterViewInit {
       };
       document.addEventListener('visibilitychange', onVisChange);
       this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', onVisChange));
+    }
+  }
+
+  private async loadInitialDayPlan(): Promise<void> {
+    this.isLoadingDay.set(true);
+    try {
+      const plan = await this.dietService.fetchDayPlan(
+        this.todayDayName,
+        this.currentGoal(),
+        this.currentDietType()
+      );
+      const initialKey = this.getCacheKey(this.todayDayName);
+      this.cachedDayPlans.set(initialKey, plan);
+      this.activeDayPlan.set(plan);
+    } finally {
+      this.isLoadingDay.set(false);
     }
   }
 

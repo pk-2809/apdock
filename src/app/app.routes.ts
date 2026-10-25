@@ -1,13 +1,22 @@
 import { Routes } from '@angular/router';
-import { AuthComponent } from './pages/auth/auth.component';
-import { HomeComponent } from './pages/home/home.component';
-import { DietComponent } from './pages/diet/diet.component';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'home', component: HomeComponent, canActivate: [authGuard] },
-  { path: 'diet', component: DietComponent, canActivate: [authGuard] },
-  { path: 'auth', component: AuthComponent, canActivate: [guestGuard] },
+  {
+    path: 'home',
+    loadComponent: () => import('./pages/home/home.component').then((m) => m.HomeComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'diet',
+    loadComponent: () => import('./pages/diet/diet.component').then((m) => m.DietComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'auth',
+    loadComponent: () => import('./pages/auth/auth.component').then((m) => m.AuthComponent),
+    canActivate: [guestGuard]
+  },
   { path: '**', redirectTo: 'home' }
 ];
