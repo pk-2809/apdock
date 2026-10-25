@@ -6,15 +6,40 @@
     <base href="/" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <meta name="color-scheme" content="dark light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="apdock" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#05070c" />
-    <link rel="icon" type="image/png" href="app-icon.png" />
-    <link rel="apple-touch-icon" href="app-icon.png" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#080b13" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="description" content="Your private, offline-capable lifestyle cockpit for calibrated diet planning, habit tracking, and personal wellness." />
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Synchronous Zero-Flash Theme Boot Script -->
+    <script>
+      (function() {
+        try {
+          var uid = null;
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.indexOf('apdock_profile_') === 0) {
+              uid = k.replace('apdock_profile_', '');
+              break;
+            }
+          }
+          var theme = (uid && localStorage.getItem('apdock_' + uid + '_theme')) || localStorage.getItem('apdock_device_theme') || 'system';
+          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Premium Typography: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

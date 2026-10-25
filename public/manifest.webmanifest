@@ -1,23 +1,73 @@
 {
+  "id": "/",
   "name": "apdock • Modern Lifestyle Hub",
   "short_name": "apdock",
-  "description": "Personal lifestyle dock with Diet Plan and Gym Schedule tracking",
-  "start_url": "/",
+  "description": "Your private, offline-capable lifestyle cockpit for calibrated diet planning, habit tracking, and personal wellness.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#070a12",
-  "theme_color": "#05070c",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "lang": "en",
+  "background_color": "#080b13",
+  "theme_color": "#080b13",
+  "categories": [
+    "health",
+    "lifestyle"
+  ],
   "icons": [
     {
-      "src": "app-icon.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "app-icon.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Diet plan",
+      "short_name": "Diet",
+      "url": "/diet?source=shortcut",
+      "description": "Quick jump into today's calibrated meal plan",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Home",
+      "short_name": "Home",
+      "url": "/home",
+      "description": "Return to apdock home overview",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
