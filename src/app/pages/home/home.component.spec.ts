@@ -71,9 +71,7 @@ describe('HomeComponent', () => {
 
     dietCard.click();
     expect(clickSpy).toHaveBeenCalledWith('diet');
-
-    gymCard.click();
-    expect(clickSpy).toHaveBeenCalledWith('gym');
+    expect(gymCard.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('should navigate directly to /diet on clicking diet card', () => {

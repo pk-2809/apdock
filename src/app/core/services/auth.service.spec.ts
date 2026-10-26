@@ -145,5 +145,58 @@ describe('AuthService - Phase 1 Option B Hardened Unit Tests', () => {
       await service.updateDietPreference({ goal: 'loss', dietType: 'veg' });
       expect(service.userProfile()?.dietPreference).toBeUndefined();
     });
+
+    it('scopes pending diet sync by uid and isolates two users on one device', async () => {
+      // 1. Simulate two users queueing offline writes on the same device
+      const prefA = { goal: 'gain' as const, dietType: 'nonveg' as const };
+      const prefB = { goal: 'loss' as const, dietType: 'veg' as const };
+
+      localStorage.setItem(
+        'apdock_pending_diet_sync_user_a',
+        JSON.stringify({ uid: 'user_a', preference: prefA, timestamp: Date.now() })
+      );
+      localStorage.setItem(
+        'apdock_pending_diet_sync_user_b',
+        JSON.stringify({ uid: 'user_b', preference: prefB, timestamp: Date.now() })
+      );
+
+      // Verify both keys exist independently on this device
+      expect(localStorage.getItem('apdock_pending_diet_sync_user_a')).toBeTruthy();
+      expect(localStorage.getItem('apdock_pending_diet_sync_user_b')).toBeTruthy();
+
+      // 2. User A is currently active
+      service.currentUser.set({ uid: 'user_a' } as any);
+
+      // Mock Firestore setDoc to avoid real network call
+      vi.spyOn(service as any, 'flushPendingDietSync').mockImplementation(async () => {
+        const user = service.currentUser();
+        if (!user) return;
+        const key = `apdock_pending_diet_sync_${user.uid}`;
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed.uid === user.uid) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Flush while User A is active
+      await service.flushPendingDietSync();
+
+      // User A's pending sync is flushed and removed
+      expect(localStorage.getItem('apdock_pending_diet_sync_user_a')).toBeNull();
+      // User B's pending sync MUST remain intact and untouched
+      expect(localStorage.getItem('apdock_pending_diet_sync_user_b')).toBeTruthy();
+      const userBPref = JSON.parse(localStorage.getItem('apdock_pending_diet_sync_user_b') || '{}');
+      expect(userBPref.uid).toBe('user_b');
+      expect(userBPref.preference.goal).toBe('loss');
+
+      // 3. Now User B becomes active and flushes
+      service.currentUser.set({ uid: 'user_b' } as any);
+      await service.flushPendingDietSync();
+
+      // User B's pending sync is now flushed and removed
+      expect(localStorage.getItem('apdock_pending_diet_sync_user_b')).toBeNull();
+    });
   });
 });

@@ -11,7 +11,7 @@ export type UpdateCheckResult = 'up-to-date' | 'ready' | 'offline';
   providedIn: 'root'
 })
 export class PwaUpdateService {
-  private readonly swUpdate = inject(SwUpdate);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -31,7 +31,7 @@ export class PwaUpdateService {
   }
 
   private initLifecycle(): void {
-    if (!this.swUpdate.isEnabled) {
+    if (!this.swUpdate || !this.swUpdate.isEnabled) {
       return;
     }
 
@@ -135,7 +135,7 @@ export class PwaUpdateService {
   private async executeReload(): Promise<void> {
     try {
       this.pendingApply = false;
-      if (this.swUpdate.isEnabled) {
+      if (this.swUpdate && this.swUpdate.isEnabled) {
         await this.swUpdate.activateUpdate();
       }
       if (typeof window !== 'undefined') {
@@ -182,7 +182,7 @@ export class PwaUpdateService {
       return 'offline';
     }
 
-    if (!this.swUpdate.isEnabled) {
+    if (!this.swUpdate || !this.swUpdate.isEnabled) {
       this.updateStatusMessage.set("You're up to date");
       return 'up-to-date';
     }

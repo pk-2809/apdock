@@ -9,12 +9,19 @@ export interface OverlayEntry {
   providedIn: 'root'
 })
 export class OverlayHistoryService {
-  private readonly ngZone = inject(NgZone);
+  private readonly ngZone = inject(NgZone, { optional: true });
   private readonly stack: OverlayEntry[] = [];
   private isPopping = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
+      // Clean up stale overlay state if refreshed while an overlay was active
+      if (window.history.state?.apdockOverlay) {
+        const cleanState = { ...window.history.state };
+        delete cleanState.apdockOverlay;
+        window.history.replaceState(cleanState, '');
+      }
+
       window.addEventListener('popstate', () => {
         if (this.isPopping) {
           this.isPopping = false;
@@ -24,13 +31,18 @@ export class OverlayHistoryService {
         if (this.stack.length > 0) {
           const top = this.stack.pop();
           if (top) {
-            this.ngZone.run(() => {
+            const close = () => {
               try {
                 top.closeFn();
               } catch (err) {
                 console.error('Error closing overlay on popstate:', err);
               }
-            });
+            };
+            if (this.ngZone) {
+              this.ngZone.run(close);
+            } else {
+              close();
+            }
           }
         }
       });
@@ -43,13 +55,18 @@ export class OverlayHistoryService {
             if (window.history.state?.apdockOverlay === top.id) {
               window.history.back();
             }
-            this.ngZone.run(() => {
+            const close = () => {
               try {
                 top.closeFn();
               } catch (err) {
                 console.error('Error closing overlay on Escape:', err);
               }
-            });
+            };
+            if (this.ngZone) {
+              this.ngZone.run(close);
+            } else {
+              close();
+            }
           }
         }
       });

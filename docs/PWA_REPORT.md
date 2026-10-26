@@ -2,8 +2,8 @@
 
 > **Target Platform:** Android Chrome (PWA Standalone) & iOS Safari (Standalone Home Screen)  
 > **Framework:** Angular 22.2.0 Zoneless, Firebase Auth, Firestore Lite, Firebase Hosting  
-> **Test Suite:** 31 Automated Tests (`scripts/test-pwa.mjs`) • Zero Failures  
-> **Preview URL:** `https://apdock--pwa-test-71y1j6zy.web.app`
+> **Test Suite:** 44 Automated PWA Tests (`scripts/test-pwa.mjs`) • 135 Unit Tests (`npm test`) • Zero Failures  
+> **Preview URL:** `https://apdock--pwa-test-71y1j6zy.web.app` (Deployment pending user confirmation)
 
 ---
 
@@ -118,6 +118,52 @@ Apdock has been transformed from an installable-in-name-only web app into a robu
   - Service Worker registration and offline app shell caching.
   - Offline cold boot with mock Firebase Auth credentials in `localStorage` and IndexedDB.
   - Non-blocking header offline pill rendering.
+
+### Phase J — Verification, Hardening & Audit Findings
+- **2a. Multi-Tenant Offline Sync Isolation**:
+  - Scoped diet sync queue to `apdock_pending_diet_sync_${user.uid}`.
+  - Added strict payload verification on flush (`parsed.uid === user.uid`) to prevent cross-account sync contamination.
+  - Added unit test in [`auth.service.spec.ts`](../src/app/core/services/auth.service.spec.ts) asserting two users queueing offline writes on one device do not leak data: User A flushing leaves User B's pending write completely intact.
+  - Added automated integration assertion in [`scripts/test-pwa.mjs`](../scripts/test-pwa.mjs) (Test 8).
+- **2b. App Check Production Immunity & Console Provider Audit**:
+  - Wrapped `(self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true` inside `if (typeof ngDevMode !== 'undefined' && ngDevMode)`.
+  - In production builds (`ng build`), Angular CLI's esbuild compiler replaces `ngDevMode` with `false`, dead-code-eliminating the assignment entirely.
+  - Grepping `dist/apdock/browser/main-*.js` confirms that zero occurrences of our debug assignment exist in production (the only occurrences are inside the Firebase App Check SDK's internal token check).
+  - Queried Firebase Management API: confirmed both `recaptchaV3Config` (TTL: 86400s) and `recaptchaEnterpriseConfig` (TTL: 3600s) exist in project `464048462179`. `auth.service.ts` uses `ReCaptchaV3Provider` by default, matching `recaptchaV3Config`.
+  - Queried App Check services API: returned `{}` (enforcement is currently unenforced in Console, perfectly aligning with its PLANNED status).
+- **2c. Auth Cold-Start Network Optimization**:
+  - Switched from `getAuth()` + `setPersistence()` to `initializeAuth(this.app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })` with **no `popupRedirectResolver`**.
+  - Because apdock uses synthetic email/password credentials mapped from username + PIN (not Google Sign-In), omitting the popup resolver eliminates:
+    - `https://apis.google.com/js/api.js` (gapi loader)
+    - `https://apis.google.com/_/scs/abc-static/_/js/k=gapi...` (iframe bridge)
+    - `https://apdock.firebaseapp.com/__/auth/iframe` & `iframe.js` (95 kB)
+    - `https://www.google.com/recaptcha/api2/...` (bframe, anchor, webworker, >350 kB)
+    - Total: **11 third-party requests and >500 kB eliminated** from cold start.
+- **2d. Viewport Accessibility Compliance**:
+  - Confirmed `maximum-scale` and `user-scalable=no` are completely absent from `index.html`.
+  - Viewport tag is strictly: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />`.
+- **2e. Manifest & Icon Dimension Audit**:
+  - `public/icons/apple-touch-icon.png`: 180x180 px
+  - `public/icons/icon-192.png`: 192x192 px
+  - `public/icons/icon-512.png`: 512x512 px
+  - `public/icons/icon-maskable-192.png`: 192x192 px (safe-zone padded)
+  - `public/icons/icon-maskable-512.png`: 512x512 px (safe-zone padded)
+  - `public/app-icon.png`: 288x288 px (Retina)
+- **3. Automated Test Suite Expansion (44 Passing Tests)**:
+  - **Build A -> Build B Update Test**: Built dynamic in-process HTTP static server in `scripts/test-pwa.mjs`. Serves Build A, registers SW, switches served root to Build B (updated `ngsw.json` + `index.html`), triggers SW check, asserts `.pwa-update-toast` renders with "New version ready" and Reload button, clicks Reload, and asserts Build B is activated in the DOM.
+  - **SW Firebase Traffic Exclusion Test**: Interrogates browser `CacheStorage` via CDP and asserts 0 entries match `identitytoolkit`, `securetoken`, `firestore.googleapis.com`, or `firebaseappcheck`.
+  - **Hardware Back Button Navigation Test**:
+    - Single overlay: opens confirmation modal, triggers `history.back()`, verifies modal closes without page reload.
+    - Nested overlays: opens root sheet and nested picker, triggers consecutive `history.back()` events, verifies LIFO dismissal.
+    - Refresh with overlay: triggers reload with overlay history state, asserts clean boot with no modal stuck open and stale state cleaned up.
+    - Back on `/home`: triggers `history.back()` with empty stack on `/home`, asserts graceful handling without navigation loop.
+  - Added unit test suite [`src/app/core/services/overlay-history.service.spec.ts`](../src/app/core/services/overlay-history.service.spec.ts) (7 tests).
+- **4. Documentation Alignment**:
+  - Updated [`docs/ARCHITECTURE.md`](ARCHITECTURE.md), [`docs/REQUIREMENTS.md`](REQUIREMENTS.md), and [`docs/UI_GUIDELINES.md`](UI_GUIDELINES.md).
+  - Documented real PIN length (6-digit PIN with $10^6$ combinations).
+  - Documented real meal timing slots (3 active timing windows in `getCurrentTimeSlot()`; Snack and after-midnight overnight window marked as PLANNED).
+  - Replaced destructive cache-wipe routine in Flow 7 with `PwaUpdateService` non-destructive background download and deferred reload.
+  - Marked unbacked claims as PLANNED (multi-goal scoped overrides, cloud sync for custom day meals, App Check enforcement).
 
 ---
 

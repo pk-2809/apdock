@@ -38,7 +38,7 @@ graph TD
     end
 
     subgraph Backend ["Cloud Infrastructure • Firebase Serverless"]
-        FB_AUTH["Firebase Authentication<br/>(Email/Password provider via 4-digit PIN wrapper)"]
+        FB_AUTH["Firebase Authentication<br/>(Email/Password provider via 6-digit PIN wrapper)"]
         FS_USERS["Cloud Firestore: /users/{uid}<br/>(Profile, Quadrants, DietPreference & Customizations)"]
         FS_USERNAMES["Cloud Firestore: /usernames/{username}<br/>(Handle Reservation Index with Auth-Gated Reads)"]
         FS_RULES["firestore.rules<br/>(Server-side enforcement of tenant isolation & anti-enumeration)"]
@@ -161,16 +161,22 @@ The single source of truth for nutrition, recipes, and schedule customization:
   - **v0.1.0 Storage Model**: All customizations are scoped under `apdock_${uid}_*` (e.g., `apdock_${uid}_custom_recipes`, `apdock_${uid}_custom_day_meals`, `apdock_${uid}_edited_day_meals`, `apdock_${uid}_removed_day_meals`, `apdock_${uid}_meal_overrides`, `apdock_${uid}_checked_veggies_${date}`).
   - **v0.2.0 Cloud Sync Model**: Custom recipes, schedule edits, and removed meals sync to Firestore subcollection `/users/{uid}/diet/customizations`. Optimistic local updates ensure zero UI latency while debounced writes persist to the cloud, protecting users against device changes, browser cache clearing, and Safari 7-day ITP data eviction.
 - **Calibrated Meal Timing Thresholds**:
-  Adjusted to reflect realistic meal windows:
-  - `06:00 - 11:30`: `'breakfast'` (Morning Plan)
-  - `11:30 - 16:00`: `'lunch'` (Midday Plan)
-  - `16:00 - 19:30`: `'snack'` (Evening Snack / Pre-Workout Slot)
-  - `19:30 - 23:59` & `00:00 - 06:00`: `'dinner'` (Night Plan)
+  - **Currently Implemented (3 Timing Windows)**:
+    - `< 12:00`: `'breakfast'` (Morning Plan)
+    - `12:00 - 18:00`: `'lunch'` (Midday Plan)
+    - `\ge 18:00`: `'dinner'` (Night Plan)
+  - **4-Slot Timing Windows (PLANNED)**:
+    - `06:00 - 11:30`: `'breakfast'`
+    - `11:30 - 16:00`: `'lunch'`
+    - `16:00 - 19:30`: `'snack'` (Evening Snack / Pre-Workout Slot)
+    - `19:30 - 23:59` & `00:00 - 06:00`: `'dinner'`
 - **Database Schema Versioning (`DIET_DATABASE_VERSION`)**:
   - `DIET_DATABASE` is tagged with a semantic version (e.g. `1.0.0`).
   - Stored modifications record `dbVersion`. If a future release updates meal IDs, a migration reconciliation routine checks stored override/edit IDs against the new schema, pruning invalid references without crashing.
 - **Goal/Type Override Scoping**:
-  - `meal_overrides` are keyed by `${goal}_${dietType}_${day}_${slot}`. Changing goals (e.g., from `gain` to `loss`) does not cause stale, non-existent dish IDs to be loaded.
+  - **Currently Implemented**: Overrides are persisted locally in `apdock_meal_overrides` keyed by `${day}_${slotId}`.
+  - **Multi-Goal Isolated Scoping (PLANNED)**: Scoping keys by `${goal}_${dietType}_${day}_${slot}` so changing goals does not carry over conflicting dish IDs.
+  - **Diet Customizations Cloud Sync (PLANNED)**: Synchronizing `customDayMeals`, `customRecipes`, and `removedMeals` to Firestore `/users/{uid}/diet/customizations`.
 - **Vegetable Checklist Date Scoping**:
   - Checked vegetables are scoped by date: `apdock_${uid}_checked_veggies_${YYYY_MM_DD}`. The checklist automatically resets at midnight (00:00) each day.
 - **Reset to Standard Plan & Undo Architecture**:

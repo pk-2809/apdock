@@ -162,24 +162,23 @@ describe('HeaderComponent', () => {
     expect(navSpy).toHaveBeenCalledWith(['/auth']);
   });
 
-  it('should handle checkForUpdates and trigger reload', async () => {
-    const reloadSpy = vi.spyOn(component, 'reloadWindow').mockImplementation(() => {});
+  it('should handle checkForUpdates delegating to pwaUpdate service', async () => {
+    const pwaUpdate = (component as any).pwaUpdate;
+    vi.spyOn(pwaUpdate, 'checkForUpdate').mockResolvedValue('up-to-date');
 
     await component.checkForUpdates();
 
-    expect(component.updateStatusMessage()).toContain('Applying latest build');
-    expect(reloadSpy).toHaveBeenCalled();
+    expect(component.updateStatusMessage()).toBe("You're up to date");
+    expect(component.isUpdateError()).toBe(false);
   });
 
-  it('should display error if checking for updates when offline', async () => {
-    const originalOnline = navigator.onLine;
-    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+  it('should report offline status when pwaUpdate reports offline', async () => {
+    const pwaUpdate = (component as any).pwaUpdate;
+    vi.spyOn(pwaUpdate, 'checkForUpdate').mockResolvedValue('offline');
 
     await component.checkForUpdates();
 
     expect(component.isUpdateError()).toBe(true);
-    expect(component.updateStatusMessage()).toContain('Device is offline');
-
-    Object.defineProperty(navigator, 'onLine', { value: originalOnline, configurable: true });
+    expect(component.updateStatusMessage()).toBe("You're offline");
   });
 });

@@ -21,6 +21,7 @@ describe('DietComponent', () => {
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
     dietService = TestBed.inject(DietService);
+    await dietService.loadDietDatabase();
     fixture.detectChanges();
   });
 

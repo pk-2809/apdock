@@ -468,8 +468,8 @@ flowchart TD
     CHECK_AUTH -- No --> AUTH_VIEW[Render /auth Bottom Sheet]
 
     AUTH_VIEW --> CHOOSE_MODE{Mode Selected}
-    CHOOSE_MODE -- Sign In --> SIGNIN_FORM[Enter Username & 4-Digit PIN]
-    CHOOSE_MODE -- Sign Up --> SIGNUP_FORM[Enter Full Name, Email & 4-Digit PIN]
+    CHOOSE_MODE -- Sign In --> SIGNIN_FORM[Enter Username & 6-Digit PIN]
+    CHOOSE_MODE -- Sign Up --> SIGNUP_FORM[Enter Full Name, Email & 6-Digit PIN]
 
     SIGNIN_FORM --> SUBMIT_SIGNIN[Click 'Unlock apdock']
     SIGNUP_FORM --> SUBMIT_SIGNUP[Click 'Create Account']
@@ -479,7 +479,7 @@ flowchart TD
 
     PROGRESS_OVERLAY --> STAGE_1[Connecting to vault]
     STAGE_1 --> STAGE_2[Locating or Generating @handle]
-    STAGE_2 --> STAGE_3[Verifying / Securing 4-digit PIN]
+    STAGE_2 --> STAGE_3[Verifying / Securing 6-digit PIN]
     STAGE_3 --> STAGE_4[Configuring 4 Quadrants]
     STAGE_4 --> STAGE_5[Unlocking apdock]
     STAGE_5 --> HOME
@@ -588,16 +588,23 @@ flowchart TD
 
 ---
 
-### Flow 7: PWA Check for Updates & WebKit Invalidation Flow
+### Flow 7: PWA Check for Updates & Non-Destructive Lifecycle Flow
 
 ```mermaid
 flowchart TD
-    SETTINGS_BTN[Click Settings Gear Button in Header] --> OPEN_SETTINGS[Settings Dropdown Opens]
-    OPEN_SETTINGS --> CLICK_UPDATE[Click 'Check for Updates']
-    CLICK_UPDATE --> STEP_1[Query navigator.serviceWorker.getRegistrations -> update]
-    STEP_1 --> STEP_2[Traverse caches.keys and delete all cache storage containers]
-    STEP_2 --> STEP_3[Issue cache-busted probe fetch: /?_pwa_bust=timestamp]
-    STEP_3 --> STEP_4[Execute controlled window.location.reload with fresh memory references]
+    AUTO_CHECK[Automatic on Boot, Visibility Change, or 30m Interval] --> QUERY_SW[SwUpdate queries ngsw.json in background]
+    MANUAL_CHECK[User Clicks 'Check for Updates' in Settings] --> QUERY_SW
+
+    QUERY_SW --> DETECT{Update Ready?}
+    DETECT -- No --> UP_TO_DATE[Show 'You are up to date' in Settings]
+    DETECT -- Yes --> BG_PREFETCH[SW prefetches new hashed chunks into passive cache]
+
+    BG_PREFETCH --> TOAST[Display non-blocking floating banner: 'New version ready - Reload']
+    TOAST --> USER_ACTION{User Interaction}
+    USER_ACTION -- Tap Reload --> OVERLAY_CHECK{Is Any Modal/Sheet Active?}
+    OVERLAY_CHECK -- Yes --> DEFER[Defer activation until active overlay closes or navigate /home]
+    OVERLAY_CHECK -- No --> ACTIVATE[swUpdate.activateUpdate -> controlled window.location.reload]
+    USER_ACTION -- Ignore/Dismiss --> CONTINUE[User continues uninterrupted; activates on next app restart]
 ```
 
 ---

@@ -50,7 +50,9 @@ export class InstallService {
 
   private checkIsStandalone(): boolean {
     if (typeof window === 'undefined') return false;
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+    const isStandaloneMode =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(display-mode: standalone)').matches;
     const isIosStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
     const isAndroidApp = typeof document !== 'undefined' && document.referrer.includes('android-app://');
     return isStandaloneMode || isIosStandalone || isAndroidApp;
@@ -120,13 +122,15 @@ export class InstallService {
     if (typeof window === 'undefined') return;
 
     // Listen to display-mode changes
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const mqListener = (e: MediaQueryListEvent): void => {
-      this.isStandalone.set(e.matches);
-    };
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', mqListener);
-      this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', mqListener));
+    if (typeof window.matchMedia === 'function') {
+      const mediaQuery = window.matchMedia('(display-mode: standalone)');
+      const mqListener = (e: MediaQueryListEvent): void => {
+        this.isStandalone.set(e.matches);
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', mqListener);
+        this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', mqListener));
+      }
     }
 
     // Capture beforeinstallprompt for Chrome / Android / Desktop

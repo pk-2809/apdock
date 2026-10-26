@@ -37,7 +37,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 
 | Persona | Profile | Core Pain Point | How apdock Solves It |
 |---|---|---|---|
-| **The Focused Professional** | 25–45, tech-savvy, values time and focus | Overwhelmed by complex diet trackers requiring calorie micro-logging; forgets complex passwords. | Sign in with a simple 4-digit PIN; instant view of today's meal options with zero calorie counting overhead. |
+| **The Focused Professional** | 25–45, tech-savvy, values time and focus | Overwhelmed by complex diet trackers requiring calorie micro-logging; forgets complex passwords. | Sign in with a simple 6-digit PIN; instant view of today's meal options with zero calorie counting overhead. |
 | **The Structured Meal Planner** | Manages household nutrition, cooks daily meals | Difficulty keeping track of grocery ingredients across days; losing favorite recipes when changing weekly plans. | Automatic date-scoped grocery vegetable aggregation; automated recipe rehoming ensuring deleted schedule dishes are preserved in the Additional Recipes library. |
 | **The Fitness & Lifestyle Enthusiast** | Pursuing specific fitness goals (Fat Loss vs Muscle Gain) | Generic recipe apps lack simple dietary filtering (Veg, Non-Veg, Mixed); cluttered interfaces with intrusive ads. | Instant Goal (`loss` / `gain`) and Lifestyle Diet Type (`veg` / `nonveg` / `both`) toggling directly in-context from the header; clean, ad-free aesthetic. |
 
@@ -46,7 +46,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 ### 1.3 Strategic Business Objectives & Value Proposition
 
 1. **Zero-Friction Authentication**:
-   - Provide the fastest possible time-to-value by replacing cumbersome password inputs with a fast **4-digit PIN** and automated handle generation (`@username`), backed by server-side rate-limiting and App Check anti-bot gating.
+   - Provide the fastest possible time-to-value by replacing cumbersome password inputs with a fast **6-digit PIN** and automated handle generation (`@username`), backed by client-side strength checks and Firebase Auth rate-limiting.
 2. **Cognitive Load Reduction**:
    - Present only what is actionable right now: dynamic time-of-day meal resolution (Morning $\rightarrow$ Breakfast, Midday $\rightarrow$ Lunch, Afternoon $\rightarrow$ Snack, Night $\rightarrow$ Dinner) and a single-tap circular day queue.
 3. **Data Preservation & "No Lost Recipes" Guarantee**:
@@ -96,16 +96,17 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 
 ### Module 1: Authentication, Security & Account Lifecycle
 
-#### `FR-AUTH-01`: 4-Digit Security PIN & Key Wrapping
-- **Description**: The system authenticates users using a 4-digit numeric PIN rather than traditional alphanumeric passwords.
+#### `FR-AUTH-01`: 6-Digit Security PIN & Key Wrapping
+- **Description**: The system authenticates users using a 6-digit numeric PIN rather than traditional alphanumeric passwords.
 - **Key Wrapping & Cryptographic Reality**:
-  - The UI restricts PIN inputs to numeric values only (`\D` stripped) and enforces exactly 4 digits (`^\d{4}$`).
+  - The UI restricts PIN inputs to numeric values only (`\D` stripped) and enforces exactly 6 digits (`^\d{6}$`).
   - Inputs offer optional visibility toggling (masking with `password` / revealing with `text`).
   - The PIN is transformed client-side into a Firebase-compliant string (`apdock_pin_${pin}_secure`).
-  - **Threat Model & Keyspace**: The system acknowledges that a 4-digit PIN has a keyspace of $10^4$ combinations ($0000 \dots 9999$). To safeguard against automated dictionary attacks:
-    - The client is protected by **Firebase App Check**.
+  - **Threat Model & Keyspace**: The system enforces a 6-digit PIN with a keyspace of $10^6$ combinations ($000000 \dots 999999$). To safeguard against automated dictionary attacks:
+    - Client-side `validatePinStrength()` rejects repeating digits (`000000`–`999999`), sequential series (`012345`, `987654`), and predictable patterns (`112233`, `121212`, `123123`).
+    - App Check anti-bot gating is **PLANNED** (registered in Firebase Console with `ReCaptchaV3Provider`; enforcement is currently inactive in the console).
     - Server-side Firestore rules block unauthenticated reads on `/usernames/{username}`, preventing user email exposure.
-    - Rate-limiting enforces exponential backoff after 3 failed attempts, locking input for 15 minutes after 5 consecutive failures.
+    - Firebase Authentication enforces built-in exponential backoff and rate-limiting after repeated failed attempts.
 
 #### `FR-AUTH-02`: Dynamic Unique Handle Generation
 - **Description**: During sign-up, the system automatically generates a unique, clean handle (e.g., `@alex`, `@alexriver`, `@alex1`) derived from the user's provided display name.
@@ -120,7 +121,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 - **Description**: During sign-in and sign-up, the system displays a luxury multi-step progress bar with contextual status labels:
   - Stage 1: *"Preparing your personal dock space."*
   - Stage 2: *"Creating unique @handle."*
-  - Stage 3: *"Securing your private 4-digit PIN."*
+  - Stage 3: *"Securing your private 6-digit PIN."*
   - Stage 4: *"Configuring 4 lifestyle quadrants."*
   - Stage 5: *"All set! Welcome to your apdock."*
 
@@ -136,7 +137,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 #### `FR-AUTH-06`: Safe Cascade Account Deletion Workflow
 - **Description**: The system provides a destructive "Delete Account" action designed to eliminate race conditions and avoid orphaned accounts.
 - **Workflow Requirements**:
-  1. **Pre-Reauthentication**: The user must confirm their 4-digit PIN immediately prior to deletion. The client executes `reauthenticateWithCredential()`. If this fails (or if the token is stale), the operation terminates safely before touching database records.
+  1. **Pre-Reauthentication**: The user must confirm their 6-digit PIN immediately prior to deletion. The client executes `reauthenticateWithCredential()`. If this fails (or if the token is stale), the operation terminates safely before touching database records.
   2. **Batched Firestore Deletion**: The system deletes `/users/{uid}` and `/usernames/{username}` in a single atomic `writeBatch()`.
   3. **Auth User Deletion**: The system invokes `deleteUser(firebaseUser)`.
   4. **Multi-Tenant Storage Purge**: The system purges all user-scoped storage keys (`apdock_${uid}_*`) and the local handle link (`apdock_user_${username}`).
@@ -146,7 +147,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 - **Description**: Signing out terminates the Firebase session via `firebaseSignOut(auth)`, clears reactive memory signals (`currentUser`, `userProfile`), and purges `sessionStorage`. User-scoped data (`apdock_${uid}_*`) remains securely isolated by UID in `localStorage` without leaking to subsequent accounts.
 
 #### `FR-AUTH-08`: PIN Recovery & Account Reset Story
-- **Description**: If a user forgets their 4-digit PIN, an authenticated email recovery flow allows requesting an OTP / magic link sent to their registered email to reset the 4-digit PIN securely.
+- **Description**: If a user forgets their 6-digit PIN, an authenticated email recovery flow allows requesting an OTP / magic link sent to their registered email to reset the 6-digit PIN securely. [PLANNED]
 
 ---
 
@@ -225,8 +226,12 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
   - *Date-Stamping Roadmap*: Transitioning from weekday templates to calendar-date logs with meal adherence tracking ("Mark as eaten").
 
 #### `FR-DIET-04`: Calibrated Meal Timing Auto-Picker
-- **Description**: Segmented control featuring: **Breakfast**, **Lunch**, **Snack**, and **Dinner**.
-- **Auto-Selection Thresholds**:
+- **Description**: Segmented control featuring: **Breakfast**, **Lunch**, and **Dinner** (with **Snack** marked as **PLANNED**).
+- **Auto-Selection Thresholds (Implemented)**:
+  - `< 12:00` $\rightarrow$ Breakfast.
+  - `12:00 - 18:00` $\rightarrow$ Lunch.
+  - `\ge 18:00` $\rightarrow$ Dinner.
+- **4-Slot Timing Model (PLANNED)**:
   - `06:00 - 11:30` $\rightarrow$ Breakfast.
   - `11:30 - 16:00` $\rightarrow$ Lunch.
   - `16:00 - 19:30` $\rightarrow$ Snack (Evening Snack / Pre-Workout).
@@ -291,7 +296,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 - **Description**: Users can restore removed default meals or reset the entire week back to the canonical standard plan via a confirmation dialog, clearing `removed_day_meals` and `edited_day_meals`.
 
 #### `FR-DIET-17`: Goal & Diet Type Override Scoping
-- **Description**: `meal_overrides` are keyed by `${goal}_${dietType}_${day}_${slot}`. Changing goals or diet types does not cause stale, non-existent dish IDs to be loaded.
+- **Description**: Meal overrides are currently stored locally in `apdock_meal_overrides` keyed by `${day}_${slotId}`. Multi-goal isolated scoping (`${goal}_${dietType}_${day}_${slot}`) and cloud persistence are marked as **PLANNED**.
 
 #### `FR-DIET-18`: Database Schema Versioning & Reconciliation
 - **Description**: `DIET_DATABASE` is tagged with a semantic version (`DIET_DATABASE_VERSION = "1.0.0"`). Stored customizations record this version; upon database updates, a migration reconciliation routine checks stored override/edit IDs against the new schema, pruning invalid references without crashing.
@@ -368,18 +373,18 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 
 | Requirement ID | Module | Feature Description | Implementation Status | Test Coverage |
 |---|---|---|:---:|:---:|
-| `FR-AUTH-01` | Auth | 4-Digit Security PIN & Key Wrapping | **Hardened** | Covered (`auth.service.spec.ts`) |
+| `FR-AUTH-01` | Auth | 6-Digit Security PIN & Key Wrapping | **Hardened** | Covered (`auth.service.spec.ts`) |
 | `FR-AUTH-02` | Auth | Auto Handle Generation & Anti-Enumeration | **Hardened** | Covered (`auth.service.spec.ts`) |
 | `FR-AUTH-03` | Auth | Progressive Staged Loading Bar | **Implemented** | Verified |
 | `FR-AUTH-04` | Auth | Multi-Tenant Offline Profile Cache | **Hardened** | Covered (`auth.service.spec.ts`) |
 | `FR-AUTH-05` | Auth | Functional `authGuard` & `guestGuard` | **Implemented** | Verified |
 | `FR-AUTH-06` | Auth | Safe Cascade Account Deletion | **Hardened Spec** | Covered (`auth.service.spec.ts`) |
 | `FR-AUTH-07` | Auth | Clean Sign Out & Session Purge | **Implemented** | Covered (`auth.service.spec.ts`) |
-| `FR-AUTH-08` | Auth | PIN Recovery & Reset Flow | *Roadmap* | Backlog |
+| `FR-AUTH-08` | Auth | PIN Recovery & Reset Flow | *PLANNED* | Backlog |
 | `FR-SHELL-01` | Shell | Global Navigation Header | **Implemented** | Covered (`header.component.spec.ts`) |
 | `FR-SHELL-02` | Shell | 3-Way Theme Switcher & Cloud Sync | **Hardened** | Covered (`header.component.spec.ts`) |
 | `FR-SHELL-03` | Shell | Contextual Diet Preference Popover | **Implemented** | Covered (`header.component.spec.ts`) |
-| `FR-SHELL-04` | Shell | `SwUpdate` PWA Updater & Cache Headers | **Hardened** | Covered (`header.component.spec.ts`) |
+| `FR-SHELL-04` | Shell | `SwUpdate` PWA Updater & Cache Headers | **Hardened** | Covered (`header.component.spec.ts`, `test-pwa.mjs`) |
 | `FR-HOME-01` | Home | Calibrated Contextual Greeting | **Implemented** | Covered (`home.component.spec.ts`) |
 | `FR-HOME-02` | Home | Live Formatted Date | **Implemented** | Covered (`home.component.spec.ts`) |
 | `FR-HOME-03` | Home | Lifestyle Quadrant Navigation Cards | **Implemented** | Covered (`home.component.spec.ts`) |
@@ -387,7 +392,7 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 | `FR-DIET-01` | Diet | Goal Selection (Loss / Gain) | **Implemented** | Covered (`diet.service.spec.ts`, `diet.component.spec.ts`) |
 | `FR-DIET-02` | Diet | Diet Type (Veg / Non-Veg / Both) | **Implemented** | Covered (`diet.service.spec.ts`, `diet.component.spec.ts`) |
 | `FR-DIET-03` | Diet | 35-Day Circular Week Queue | **Implemented** | Covered (`diet.component.spec.ts`) |
-| `FR-DIET-04` | Diet | Calibrated Meal Timing Auto-Picker | **Hardened** | Covered (`diet.component.spec.ts`) |
+| `FR-DIET-04` | Diet | Calibrated Meal Timing Auto-Picker (3 slots active; 4th slot PLANNED) | **Hardened** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-05` | Diet | 1-Day Loading & CSS Shimmer Waves | **Implemented** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-06` | Diet | Numbered Daily Meals Schedule List | **Implemented** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-07` | Diet | Add Recipe (Schedule / Additional / Both) | **Implemented** | Covered (`diet.component.spec.ts`) |
@@ -397,13 +402,13 @@ The flagship module—**Personalized Daily Diet**—eliminates meal planning fat
 | `FR-DIET-11` | Diet | Lifestyle-Filtered Additional Recipes Stack | **Hardened** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-12` | Diet | Move Additional Recipe to Schedule Sheet | **Implemented** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-13` | Diet | Recipe Modification & Deletion | **Implemented** | Covered (`diet.component.spec.ts`) |
-| `FR-DIET-14` | Diet | Multi-Tenant Scoped Storage Persistence | **Hardened** | Covered (`diet.service.spec.ts`) |
+| `FR-DIET-14` | Diet | Multi-Tenant Scoped Storage Persistence | **Hardened** | Covered (`diet.service.spec.ts`, `auth.service.spec.ts`) |
 | `FR-DIET-15` | Diet | Tactile Toast Notifications | **Implemented** | Covered (`diet.component.spec.ts`) |
 | `FR-DIET-16` | Diet | Standard Plan Reset & Undo | **Hardened Spec** | Covered (`diet.service.spec.ts`) |
-| `FR-DIET-17` | Diet | Goal/Diet Type Override Scoping | **Hardened Spec** | Covered (`diet.component.spec.ts`) |
+| `FR-DIET-17` | Diet | Goal/Diet Type Override Scoping | *PLANNED* | Backlog |
 | `FR-DIET-18` | Diet | Database Schema Versioning (`v1.0.0`) | **Hardened Spec** | Covered (`diet.service.spec.ts`) |
 | `FR-HEALTH-01` | Health | Nutritional Guidance & Medical Disclaimer | **Hardened Spec** | Verified |
-| `FR-SYNC-01` | Sync | Diet Customizations Cloud Persistence | *Roadmap v0.2.0* | Backlog |
-| `FR-GYM-01` | Gym | Workout Split Management | *Roadmap* | Backlog |
-| `FR-GYM-02` | Gym | Routine & Set Visualizer | *Roadmap* | Backlog |
-| `FR-GYM-03` | Gym | Diet-Workout Caloric Integration | *Roadmap* | Backlog |
+| `FR-SYNC-01` | Sync | Diet Customizations Cloud Persistence | *PLANNED* | Backlog |
+| `FR-GYM-01` | Gym | Workout Split Management | *PLANNED* | Backlog |
+| `FR-GYM-02` | Gym | Routine & Set Visualizer | *PLANNED* | Backlog |
+| `FR-GYM-03` | Gym | Diet-Workout Caloric Integration | *PLANNED* | Backlog |

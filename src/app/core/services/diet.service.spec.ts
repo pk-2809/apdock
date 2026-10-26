@@ -6,11 +6,12 @@ describe('DietService', () => {
   let service: DietService;
   let authService: AuthService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
     TestBed.configureTestingModule({});
     service = TestBed.inject(DietService);
     authService = TestBed.inject(AuthService);
+    await service.loadDietDatabase();
   });
 
   it('should be created', () => {

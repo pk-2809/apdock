@@ -1,7 +1,10 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, isDevMode } from '@angular/core';
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import {
+  initializeAuth,
   getAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
   Auth,
   User,
   onAuthStateChanged,
@@ -10,8 +13,6 @@ import {
   updateProfile,
   deleteUser,
   signOut as firebaseSignOut,
-  setPersistence,
-  browserLocalPersistence,
   EmailAuthProvider,
   reauthenticateWithCredential
 } from 'firebase/auth';
@@ -25,8 +26,10 @@ import {
   writeBatch,
   serverTimestamp
 } from 'firebase/firestore/lite';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { firebaseConfig } from '../firebase.config';
+
+declare const ngDevMode: boolean | undefined;
 
 export const AUTH_SYNTHETIC_DOMAIN = 'auth.apdock.internal';
 
@@ -220,28 +223,51 @@ export class AuthService {
 
   constructor() {
     this.app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-    this.auth = getAuth(this.app);
-    this.db = getFirestore(this.app);
 
-    // Step 2: Initialize App Check with debug token for local dev/emulator
+    // Step 1: Initialize Auth with indexedDB persistence and NO popupRedirectResolver
+    // Omitting popupRedirectResolver prevents heavy gapi/iframe/recaptcha scripts from loading on cold start
     if (typeof window !== 'undefined') {
       try {
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        this.auth = initializeAuth(this.app, {
+          persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+        });
+      } catch {
+        // Fallback if already initialized (e.g. repeated test instances)
+        this.auth = getAuth(this.app);
+      }
+    } else {
+      this.auth = getAuth(this.app);
+    }
+    this.db = getFirestore(this.app);
+
+    // Step 2: Initialize App Check only if a genuine siteKey is configured in firebaseConfig
+    // In production builds (isDevMode() === false), the debug token branch is completely eliminated
+    if (typeof window !== 'undefined') {
+      try {
+        // In production builds, ngDevMode is defined as false by Angular's esbuild compiler,
+        // causing esbuild to completely drop the debug token branch from the dist output
+        if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+          if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+          }
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const siteKey = (firebaseConfig as any).recaptchaSiteKey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
-        initializeAppCheck(this.app, {
-          provider: new ReCaptchaV3Provider(siteKey),
-          isTokenAutoRefreshEnabled: true
-        });
+        const cfg = firebaseConfig as any;
+        const siteKey = cfg.recaptchaSiteKey;
+        if (siteKey) {
+          const isEnterprise = cfg.recaptchaEnterprise === true;
+          const provider = isEnterprise
+            ? new ReCaptchaEnterpriseProvider(siteKey)
+            : new ReCaptchaV3Provider(siteKey);
+          initializeAppCheck(this.app, {
+            provider,
+            isTokenAutoRefreshEnabled: true
+          });
+        }
       } catch (err) {
         console.warn('App Check initialization:', err);
       }
-
-      // Configure persistent session: PIN needed only on a new device or after explicit sign-out
-      setPersistence(this.auth, browserLocalPersistence).catch(() => {});
     }
 
     // Listen to real-time auth changes
@@ -738,18 +764,20 @@ export class AuthService {
       } catch {}
     }
 
-    // 2. Write to Firestore Lite; if offline or fails, mark pending in outbox
+    // 2. Write to Firestore Lite; if offline or fails, mark pending in UID-scoped outbox
+    const syncKey = `apdock_pending_diet_sync_${user.uid}`;
     try {
       const userRef = doc(this.db, 'users', user.uid);
       await setDoc(userRef, { dietPreference: preference, lastLoginAt: serverTimestamp() }, { merge: true });
       try {
+        localStorage.removeItem(syncKey);
         localStorage.removeItem('apdock_pending_diet_sync');
       } catch {}
     } catch (e) {
       console.warn('Diet preference cloud sync deferred (offline):', e);
       try {
         localStorage.setItem(
-          'apdock_pending_diet_sync',
+          syncKey,
           JSON.stringify({ uid: user.uid, preference, timestamp: Date.now() })
         );
       } catch {}
@@ -759,16 +787,22 @@ export class AuthService {
   async flushPendingDietSync(): Promise<void> {
     if (typeof localStorage === 'undefined') return;
     try {
-      const raw = localStorage.getItem('apdock_pending_diet_sync');
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
       const user = this.currentUser();
-      if (!user || user.uid !== parsed.uid) return;
+      if (!user) return;
+
+      const syncKey = `apdock_pending_diet_sync_${user.uid}`;
+      const raw = localStorage.getItem(syncKey) || localStorage.getItem('apdock_pending_diet_sync');
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      // Strictly verify that the queued payload belongs to the currently authenticated user
+      if (!parsed || parsed.uid !== user.uid) return;
 
       const userRef = doc(this.db, 'users', user.uid);
       await setDoc(userRef, { dietPreference: parsed.preference, lastLoginAt: serverTimestamp() }, { merge: true });
+      localStorage.removeItem(syncKey);
       localStorage.removeItem('apdock_pending_diet_sync');
-      console.log('Successfully flushed pending diet preference to cloud');
+      console.log(`Successfully flushed pending diet preference for ${user.uid} to cloud`);
     } catch (err) {
       console.warn('Deferred diet preference sync attempt failed:', err);
     }
