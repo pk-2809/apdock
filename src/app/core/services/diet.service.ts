@@ -181,7 +181,7 @@ export class DietService {
   }
 
   private createFallbackSlot(
-    slotId: 'breakfast' | 'lunch' | 'dinner',
+    slotId: 'breakfast' | 'lunch' | 'dinner' | 'snack',
     slotTitle: string,
     slotTime: string,
     day: DayOfWeek
@@ -211,38 +211,97 @@ export class DietService {
 
     // 1. Filter meals matching day, goal, dietType
     const matchingMeals = allMeals.filter(m => {
-      // Day check: empty array means all days, otherwise must include current day
-      if (m.day && m.day.length > 0) {
-        const matchesDay = m.day.some(d => d.toLowerCase() === dayNorm);
+      // Day check: empty array or missing means all days
+      const rawDay: unknown = m.day;
+      const dayArr: string[] = Array.isArray(rawDay)
+        ? rawDay.map(d => String(d).trim()).filter(Boolean)
+        : typeof rawDay === 'string' && (rawDay as string).trim()
+          ? [(rawDay as string).trim()]
+          : [];
+
+      if (dayArr.length > 0) {
+        const matchesDay = dayArr.some(d => {
+          if (!d) return false;
+          const clean = d.toLowerCase();
+          return (
+            clean === dayNorm ||
+            clean === 'all' ||
+            clean === 'everyday' ||
+            clean === 'daily' ||
+            clean === '*' ||
+            (clean.length >= 3 && dayNorm.startsWith(clean.slice(0, 3)))
+          );
+        });
         if (!matchesDay) return false;
       }
 
       // Goal check:
-      if (m.goals && m.goals.length > 0) {
-        if (goal === 'loss') {
-          const match = m.goals.some(g => ['weight_loss', 'loss', 'fat_loss', 'all'].includes(g.toLowerCase()));
-          if (!match) return false;
-        } else if (goal === 'gain') {
-          const match = m.goals.some(g => ['weight_gain', 'gain', 'muscle_gain', 'all'].includes(g.toLowerCase()));
-          if (!match) return false;
-        }
+      const rawGoals: unknown = m.goals;
+      const goalArr: string[] = Array.isArray(rawGoals)
+        ? rawGoals.map(g => String(g).trim()).filter(Boolean)
+        : typeof rawGoals === 'string' && (rawGoals as string).trim()
+          ? [(rawGoals as string).trim()]
+          : [];
+
+      if (goalArr.length > 0) {
+        const cleanGoal = goal.toLowerCase();
+        const matchesGoal = goalArr.some(g => {
+          if (!g) return false;
+          const clean = g.toLowerCase().replace(/[-_]/g, ' ').trim();
+          if (cleanGoal === 'loss') {
+            return [
+              'weight loss', 'loss', 'fat loss', 'fatloss', 'weightloss',
+              'cut', 'cutting', 'deficit', 'lean', 'all', 'both', 'any'
+            ].includes(clean);
+          } else if (cleanGoal === 'gain') {
+            return [
+              'weight gain', 'gain', 'muscle gain', 'musclegain', 'weightgain',
+              'bulk', 'bulking', 'surplus', 'mass', 'all', 'both', 'any'
+            ].includes(clean);
+          }
+          return true;
+        });
+        if (!matchesGoal) return false;
       }
 
       // DietType check:
       if (dietType === 'veg') {
         const lower = (m.dietType || '').toLowerCase();
-        if (lower.includes('non')) return false;
-      } else if (dietType === 'nonveg') {
-        const lower = (m.dietType || '').toLowerCase();
-        if (lower === 'veg' || lower === 'vegetarian') return false;
+        if (
+          lower.includes('non') ||
+          lower.includes('meat') ||
+          lower.includes('chicken') ||
+          lower.includes('fish') ||
+          lower.includes('beef') ||
+          lower.includes('pork') ||
+          lower.includes('mutton')
+        ) {
+          return false;
+        }
       }
+
       return true;
     });
 
+    // Helper for category matching: handles various common naming formats
+    const isCategory = (docCategory: string | undefined, slot: 'breakfast' | 'lunch' | 'dinner'): boolean => {
+      const cat = (docCategory || '').toLowerCase().trim();
+      if (slot === 'breakfast') {
+        return cat === 'breakfast' || cat === 'morning' || cat.startsWith('break');
+      }
+      if (slot === 'lunch') {
+        return cat === 'lunch' || cat === 'afternoon' || cat === 'midday';
+      }
+      if (slot === 'dinner') {
+        return cat === 'dinner' || cat === 'night' || cat === 'evening' || cat === 'supper';
+      }
+      return false;
+    };
+
     // 2. Group by category
-    const breakfastDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'breakfast');
-    const lunchDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'lunch');
-    const dinnerDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'dinner');
+    const breakfastDocs = matchingMeals.filter(m => isCategory(m.category, 'breakfast'));
+    const lunchDocs = matchingMeals.filter(m => isCategory(m.category, 'lunch'));
+    const dinnerDocs = matchingMeals.filter(m => isCategory(m.category, 'dinner'));
 
     const createSlot = (
       slotId: 'breakfast' | 'lunch' | 'dinner',
@@ -250,11 +309,46 @@ export class DietService {
       slotTime: string,
       docs: MealDocument[]
     ): MealSlot => {
-      if (docs.length === 0) {
+      let validDocs = docs;
+      if (dietType === 'veg') {
+        validDocs = docs.filter(d => {
+          const lower = (d.dietType || '').toLowerCase();
+          return !lower.includes('non') && !lower.includes('meat') && !lower.includes('chicken') && !lower.includes('fish');
+        });
+      }
+
+      if (validDocs.length === 0) {
         return this.createFallbackSlot(slotId, slotTitle, slotTime, day);
       }
-      const primary = this.toMealOption(docs[0]);
-      const alternatives = docs.slice(1).map(d => this.toMealOption(d));
+
+      // Sort docs intelligently for this slot:
+      // 1. If user prefers nonveg, prioritize nonveg items
+      // 2. Prioritize 'main' and 'component' dishes before beverages/drinks for primaryMeal slot
+      const sorted = [...validDocs].sort((a, b) => {
+        if (dietType === 'nonveg') {
+          const aNonVeg = (a.dietType || '').toLowerCase().includes('non');
+          const bNonVeg = (b.dietType || '').toLowerCase().includes('non');
+          if (aNonVeg && !bNonVeg) return -1;
+          if (!aNonVeg && bNonVeg) return 1;
+        }
+
+        const getRoleRank = (role?: string): number => {
+          const r = (role || 'main').toLowerCase();
+          if (r === 'main') return 0;
+          if (r === 'component') return 1;
+          if (r === 'side' || r === 'snack') return 2;
+          if (r === 'beverage' || r === 'drink') return 3;
+          return 2;
+        };
+
+        const rankDiff = getRoleRank(a.mealRole) - getRoleRank(b.mealRole);
+        if (rankDiff !== 0) return rankDiff;
+
+        return 0;
+      });
+
+      const primary = this.toMealOption(sorted[0]);
+      const alternatives = sorted.slice(1).map(d => this.toMealOption(d));
       return {
         slotId,
         slotTitle,
@@ -630,8 +724,16 @@ export class DietService {
         }
       });
 
-      const primary = remainingOptions.length > 0 ? remainingOptions[0] : slot.primaryMeal;
-      const alternatives = remainingOptions.length > 1 ? remainingOptions.slice(1) : [];
+      // Crucial step: filter out placeholders if genuine meals exist
+      const genuineMeals = remainingOptions.filter(o => !o.id.includes('placeholder'));
+      const activeList = genuineMeals.length > 0 ? genuineMeals : remainingOptions;
+
+      if (activeList.length === 0) {
+        return this.createFallbackSlot(slot.slotId, slot.slotTitle, slot.slotTime, day);
+      }
+
+      const primary = activeList[0];
+      const alternatives = activeList.slice(1);
 
       return {
         ...slot,
@@ -644,19 +746,29 @@ export class DietService {
     const additionalVeggies: { name: string; category: string; checked?: boolean }[] = [];
 
     clonedMeals.forEach(slot => {
-      [slot.primaryMeal, ...slot.alternativeOptions].forEach(opt => {
-        opt.veggies?.forEach(v => {
-          if (!existingVeggieNames.has(v.toLowerCase())) {
-            existingVeggieNames.add(v.toLowerCase());
-            additionalVeggies.push({ name: v, category: 'Fresh' });
+      if (!slot.primaryMeal.id.includes('placeholder')) {
+        [slot.primaryMeal, ...slot.alternativeOptions].forEach(opt => {
+          if (!opt.id.includes('placeholder')) {
+            opt.veggies?.forEach(v => {
+              const clean = v.trim();
+              if (clean && !existingVeggieNames.has(clean.toLowerCase())) {
+                existingVeggieNames.add(clean.toLowerCase());
+                const capitalized = clean.charAt(0).toUpperCase() + clean.slice(1);
+                additionalVeggies.push({ name: capitalized, category: 'Fresh' });
+              }
+            });
           }
         });
-      });
+      }
     });
 
     return {
       ...basePlan,
       meals: clonedMeals,
+      totalCalories: clonedMeals.reduce((sum, s) => sum + s.primaryMeal.calories, 0),
+      totalProtein: clonedMeals.reduce((sum, s) => sum + s.primaryMeal.protein, 0),
+      totalCarbs: clonedMeals.reduce((sum, s) => sum + s.primaryMeal.carbs, 0),
+      totalFat: clonedMeals.reduce((sum, s) => sum + s.primaryMeal.fat, 0),
       todayVeggies: [...basePlan.todayVeggies, ...additionalVeggies]
     };
   }
@@ -713,10 +825,44 @@ export class DietService {
     const removedSet = new Set(this.removedAdditionalRecipeIds());
     const editedMap = this.editedAdditionalRecipes();
 
-    // 1. Gather alternate meals from Firestore (category="alternate")
+    // 1. Gather alternate meals from Firestore (category="alternate", "alternatives", "additional", "extra")
     const firestoreAlternates: AdditionalRecipe[] = this.firestoreService
       .meals()
-      .filter(m => (m.category || '').toLowerCase() === 'alternate')
+      .filter(m => {
+        const cat = (m.category || '').toLowerCase().trim();
+        const isAlt = cat === 'alternate' || cat === 'alternatives' || cat === 'additional' || cat === 'extra';
+        if (!isAlt) return false;
+
+        const rawGoals: unknown = m.goals;
+        const goalArr: string[] = Array.isArray(rawGoals)
+          ? rawGoals.map(g => String(g).trim()).filter(Boolean)
+          : typeof rawGoals === 'string' && (rawGoals as string).trim()
+            ? [(rawGoals as string).trim()]
+            : [];
+
+        if (goalArr.length > 0) {
+          const cleanGoal = goal.toLowerCase();
+          const matchesGoal = goalArr.some(g => {
+            if (!g) return false;
+            const clean = g.toLowerCase().replace(/[-_]/g, ' ').trim();
+            if (cleanGoal === 'loss') {
+              return [
+                'weight loss', 'loss', 'fat loss', 'fatloss', 'weightloss',
+                'cut', 'cutting', 'deficit', 'lean', 'all', 'both', 'any'
+              ].includes(clean);
+            } else if (cleanGoal === 'gain') {
+              return [
+                'weight gain', 'gain', 'muscle gain', 'musclegain', 'weightgain',
+                'bulk', 'bulking', 'surplus', 'mass', 'all', 'both', 'any'
+              ].includes(clean);
+            }
+            return true;
+          });
+          if (!matchesGoal) return false;
+        }
+
+        return true;
+      })
       .map(m => ({
         id: m.id,
         title: m.name,
@@ -750,7 +896,6 @@ export class DietService {
       })
       .filter(r => {
         if (dietType === 'veg' && r.dietType === 'nonveg') return false;
-        if (dietType === 'nonveg' && r.dietType === 'veg') return false;
         return true;
       });
   }

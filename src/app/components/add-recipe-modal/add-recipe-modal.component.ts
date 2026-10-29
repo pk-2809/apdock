@@ -139,6 +139,7 @@ export class AddRecipeModalComponent implements OnChanges, OnDestroy {
   readonly selectedCategory = signal<'High Protein' | 'Quick 10-Min' | 'Nutrient Dense' | 'Smoothie & Detox'>('High Protein');
   readonly selectedDietType = signal<DietType>('veg');
   readonly isConfirmRemoveOpen = signal<boolean>(false);
+  readonly isSubmitting = signal<boolean>(false);
 
   readonly weekDays: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   readonly mealSlots: { id: 'breakfast' | 'lunch' | 'dinner'; label: string; icon: string }[] = [
@@ -392,6 +393,8 @@ export class AddRecipeModalComponent implements OnChanges, OnDestroy {
   }
 
   submitRecipe(): void {
+    if (this.isSubmitting()) return;
+
     const name = this.recipeName().trim();
     const ings = this.ingredients();
 
@@ -407,84 +410,89 @@ export class AddRecipeModalComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    const dest = this.destination();
-    const day = this.targetDay();
-    const slot = this.mealSlot();
+    this.isSubmitting.set(true);
+    try {
+      const dest = this.destination();
+      const day = this.targetDay();
+      const slot = this.mealSlot();
 
-    if (this.mode === 'edit') {
-      if (this.editingAdditionalRecipe) {
-        const updated = this.dietService.updateAdditionalRecipe({
-          id: this.editingAdditionalRecipe.id,
+      if (this.mode === 'edit') {
+        if (this.editingAdditionalRecipe) {
+          const updated = this.dietService.updateAdditionalRecipe({
+            id: this.editingAdditionalRecipe.id,
+            title: name,
+            keyIngredients: ings,
+            dietType: this.selectedDietType(),
+            category: this.selectedCategory()
+          });
+
+          this.updatedAdditional.emit(updated);
+          this.closeModal();
+          return;
+        }
+
+        if (this.editingMeal) {
+          this.dietService.updateScheduleRecipe({
+            id: this.editingMeal.id,
+            name,
+            veggies: ings,
+            day,
+            slotId: slot,
+            originalDay: this.activeDay,
+            originalSlotId: this.initialSlot
+          });
+
+          this.updated.emit({
+            id: this.editingMeal.id,
+            name,
+            veggies: ings,
+            day,
+            slotId: slot,
+            originalDay: this.activeDay,
+            originalSlotId: this.initialSlot
+          });
+
+          this.closeModal();
+          return;
+        }
+      }
+
+      let createdRecipe: AdditionalRecipe | undefined;
+      let createdMeal: CustomDayMeal | undefined;
+
+      if (dest === 'additional' || dest === 'both') {
+        createdRecipe = this.dietService.addCustomRecipe({
           title: name,
           keyIngredients: ings,
-          dietType: this.selectedDietType(),
-          category: this.selectedCategory()
+          category: this.selectedCategory(),
+          dietType: this.selectedDietType()
         });
-
-        this.updatedAdditional.emit(updated);
-        this.closeModal();
-        return;
       }
 
-      if (this.editingMeal) {
-        this.dietService.updateScheduleRecipe({
-          id: this.editingMeal.id,
-          name,
-          veggies: ings,
+      if (dest === 'day_meal' || dest === 'both') {
+        createdMeal = this.dietService.addCustomDayMeal({
           day,
           slotId: slot,
-          originalDay: this.activeDay,
-          originalSlotId: this.initialSlot
-        });
-
-        this.updated.emit({
-          id: this.editingMeal.id,
           name,
-          veggies: ings,
-          day,
-          slotId: slot,
-          originalDay: this.activeDay,
-          originalSlotId: this.initialSlot
+          veggies: ings
         });
-
-        this.closeModal();
-        return;
       }
-    }
 
-    let createdRecipe: AdditionalRecipe | undefined;
-    let createdMeal: CustomDayMeal | undefined;
-
-    if (dest === 'additional' || dest === 'both') {
-      createdRecipe = this.dietService.addCustomRecipe({
+      this.added.emit({
+        destination: dest,
         title: name,
         keyIngredients: ings,
-        category: this.selectedCategory(),
-        dietType: this.selectedDietType()
-      });
-    }
-
-    if (dest === 'day_meal' || dest === 'both') {
-      createdMeal = this.dietService.addCustomDayMeal({
+        dietType: this.selectedDietType(),
+        mealSlot: slot,
         day,
-        slotId: slot,
-        name,
-        veggies: ings
+        additionalRecipe: createdRecipe,
+        customMeal: createdMeal
       });
+
+      this.closeModal();
+    } finally {
+      this.isSubmitting.set(false);
     }
-
-    this.added.emit({
-      destination: dest,
-      title: name,
-      keyIngredients: ings,
-      dietType: this.selectedDietType(),
-      mealSlot: slot,
-      day,
-      additionalRecipe: createdRecipe,
-      customMeal: createdMeal
-    });
-
-    this.closeModal();
   }
 
   promptRemoveFromSchedule(): void {
@@ -496,23 +504,30 @@ export class AddRecipeModalComponent implements OnChanges, OnDestroy {
   }
 
   onRemoveFromSchedule(): void {
-    this.isConfirmRemoveOpen.set(false);
-    if (this.editingAdditionalRecipe) {
-      const rec = this.editingAdditionalRecipe;
-      this.dietService.removeAdditionalRecipe(rec.id);
-      this.deletedAdditional.emit(rec);
-      this.closeModal();
-      return;
-    }
-    if (this.editingMeal) {
-      this.removed.emit(this.editingMeal);
-      this.closeModal();
+    if (this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    try {
+      this.isConfirmRemoveOpen.set(false);
+      if (this.editingAdditionalRecipe) {
+        const rec = this.editingAdditionalRecipe;
+        this.dietService.removeAdditionalRecipe(rec.id);
+        this.deletedAdditional.emit(rec);
+        this.closeModal();
+        return;
+      }
+      if (this.editingMeal) {
+        this.removed.emit(this.editingMeal);
+        this.closeModal();
+      }
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 
   closeModal(): void {
     this.unlockBodyScroll();
     this.isConfirmRemoveOpen.set(false);
+    this.isSubmitting.set(false);
     this.recipeName.set('');
     this.ingredients.set([]);
     this.searchQuery.set('');

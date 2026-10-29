@@ -13,6 +13,7 @@
           "/*.css",
           "/*.js",
           "/app-icon.png",
+          "/apple-touch-icon.png",
           "/icons/**"
         ]
       }

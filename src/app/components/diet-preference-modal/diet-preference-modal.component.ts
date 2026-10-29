@@ -91,6 +91,7 @@ export class DietPreferenceModalComponent implements OnInit, OnChanges, OnDestro
   }
 
   async onConfirm(): Promise<void> {
+    if (this.isSaving()) return;
     this.isSaving.set(true);
     const goal = this.selectedGoal();
     const dietType = this.selectedDietType();

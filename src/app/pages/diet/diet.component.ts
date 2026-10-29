@@ -159,7 +159,13 @@ export class DietComponent implements OnInit, AfterViewInit {
   // Simple read-only list of cooking options for active day and meal
   readonly slotOptions = computed<MealOption[]>(() => {
     const slot = this.activeMealSlot();
-    return [slot.primaryMeal, ...slot.alternativeOptions];
+    const active = this.getActiveMeal(slot);
+    const all = [slot.primaryMeal, ...slot.alternativeOptions];
+    if (active && active.id !== slot.primaryMeal.id) {
+      const remaining = all.filter(o => o.id !== active.id);
+      return [active, ...remaining];
+    }
+    return all;
   });
 
   // Flat list of options alias for backward compatibility with tests
@@ -207,7 +213,7 @@ export class DietComponent implements OnInit, AfterViewInit {
       this.isDietModalOpen.set(true);
     }
 
-    // Load initial day data asynchronously (dynamic import of DIET_DATABASE) with shimmer
+    // Load initial day data asynchronously from Firestore with Stale-While-Revalidate
     this.loadInitialDayPlan();
 
     // Resume handling on visibilitychange to visible
@@ -223,7 +229,10 @@ export class DietComponent implements OnInit, AfterViewInit {
   }
 
   private async loadInitialDayPlan(): Promise<void> {
-    this.isLoadingDay.set(true);
+    const hasLoadedMeals = this.dietService.firestoreService.meals().length > 0;
+    if (!hasLoadedMeals) {
+      this.isLoadingDay.set(true);
+    }
     try {
       const plan = await this.dietService.fetchDayPlan(
         this.todayDayName,
@@ -310,19 +319,29 @@ export class DietComponent implements OnInit, AfterViewInit {
     this.selectedDay.set(day);
 
     const cacheKey = this.getCacheKey(day);
-    const cached = this.cachedDayPlans.get(cacheKey);
+    let plan = this.cachedDayPlans.get(cacheKey);
 
-    if (cached) {
-      // Instant switch with smooth ease crossfade
-      this.activeDayPlan.set(cached);
-    } else {
-      // Backend fetch simulation: 1 day data fetched on-demand with smooth shimmer
+    if (!plan) {
+      // Synchronously compute instant day plan from in-memory meals if available
+      plan = this.dietService.getDayPlan(day, this.currentGoal(), this.currentDietType());
+      this.cachedDayPlans.set(cacheKey, plan);
+    }
+    this.activeDayPlan.set(plan);
+
+    const hasLoadedMeals = this.dietService.firestoreService.meals().length > 0;
+    if (!hasLoadedMeals) {
       this.isLoadingDay.set(true);
-      try {
-        const fetchedPlan = await this.dietService.fetchDayPlan(day, this.currentGoal(), this.currentDietType());
+    }
+
+    try {
+      const fetchedPlan = await this.dietService.fetchDayPlan(day, this.currentGoal(), this.currentDietType());
+      // Race condition guard: only update if user is still viewing this day
+      if (this.selectedDay() === day) {
         this.cachedDayPlans.set(cacheKey, fetchedPlan);
         this.activeDayPlan.set(fetchedPlan);
-      } finally {
+      }
+    } finally {
+      if (this.selectedDay() === day) {
         this.isLoadingDay.set(false);
       }
     }
@@ -521,6 +540,10 @@ export class DietComponent implements OnInit, AfterViewInit {
   }
 
   openEditScheduleRecipeModal(dish: MealOption): void {
+    if (dish.id.includes('placeholder')) {
+      this.openAddRecipeModal('day_meal');
+      return;
+    }
     this.modalMode.set('edit');
     this.editingMeal.set(dish);
     this.editingAdditionalRecipe.set(null);

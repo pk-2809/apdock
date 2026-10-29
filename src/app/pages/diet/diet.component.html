@@ -107,13 +107,17 @@
           <!-- Shimmer Skeleton Loader when fetching day data asynchronously -->
           @if (isLoadingDay()) {
             <div class="skeleton-options-list" aria-busy="true" aria-label="Loading options">
-              <div class="skeleton-card shimmer-wave">
-                <div class="sk-line sk-title"></div>
-                <div class="sk-line sk-body"></div>
+              <div class="skeleton-card skeleton-dish-card shimmer-wave">
+                <div class="sk-dish-group">
+                  <div class="sk-num-badge"></div>
+                  <div class="sk-line sk-dish-name"></div>
+                </div>
               </div>
-              <div class="skeleton-card shimmer-wave">
-                <div class="sk-line sk-title"></div>
-                <div class="sk-line sk-body"></div>
+              <div class="skeleton-card skeleton-dish-card shimmer-wave">
+                <div class="sk-dish-group">
+                  <div class="sk-num-badge"></div>
+                  <div class="sk-line sk-dish-name"></div>
+                </div>
               </div>
             </div>
           } @else {
@@ -149,10 +153,19 @@
         </div>
 
         @if (isLoadingDay()) {
-          <div class="skeleton-veggies" aria-busy="true">
-            <div class="skeleton-veg-row shimmer-wave"></div>
-            <div class="skeleton-veg-row shimmer-wave"></div>
-            <div class="skeleton-veg-row shimmer-wave"></div>
+          <div class="skeleton-veggies" aria-busy="true" aria-label="Loading vegetables">
+            <div class="skeleton-veg-row shimmer-wave">
+              <div class="sk-line sk-veg-name"></div>
+              <div class="sk-line sk-veg-cat"></div>
+            </div>
+            <div class="skeleton-veg-row shimmer-wave">
+              <div class="sk-line sk-veg-name"></div>
+              <div class="sk-line sk-veg-cat"></div>
+            </div>
+            <div class="skeleton-veg-row shimmer-wave">
+              <div class="sk-line sk-veg-name"></div>
+              <div class="sk-line sk-veg-cat"></div>
+            </div>
           </div>
         } @else {
           <div class="veggies-list ease-in">
@@ -198,13 +211,21 @@
 
         @if (isLoadingDay()) {
           <div class="skeleton-recipes-stack" aria-busy="true" aria-label="Loading additional recipes">
-            <div class="skeleton-card shimmer-wave">
-              <div class="sk-line sk-title"></div>
-              <div class="sk-line sk-body"></div>
+            <div class="skeleton-card skeleton-recipe-card shimmer-wave">
+              <div class="sk-line sk-recipe-title"></div>
+              <div class="sk-ingredients-strip">
+                <div class="sk-line sk-pill"></div>
+                <div class="sk-line sk-pill w-med"></div>
+                <div class="sk-line sk-pill w-long"></div>
+              </div>
             </div>
-            <div class="skeleton-card shimmer-wave">
-              <div class="sk-line sk-title"></div>
-              <div class="sk-line sk-body"></div>
+            <div class="skeleton-card skeleton-recipe-card shimmer-wave">
+              <div class="sk-line sk-recipe-title"></div>
+              <div class="sk-ingredients-strip">
+                <div class="sk-line sk-pill"></div>
+                <div class="sk-line sk-pill w-med"></div>
+                <div class="sk-line sk-pill w-long"></div>
+              </div>
             </div>
           </div>
         } @else {

@@ -34,6 +34,7 @@ export class MoveRecipeModalComponent implements OnInit, OnDestroy {
   }>();
 
   readonly selectedSlot = signal<'breakfast' | 'lunch' | 'dinner'>('lunch');
+  readonly isMoving = signal<boolean>(false);
 
   ngOnInit(): void {
     if (this.activeSlot) {
@@ -56,11 +57,17 @@ export class MoveRecipeModalComponent implements OnInit, OnDestroy {
   }
 
   confirmMove(): void {
-    this.moved.emit({
-      recipe: this.recipe,
-      slotId: this.selectedSlot(),
-      applyToAllDays: false
-    });
+    if (this.isMoving()) return;
+    this.isMoving.set(true);
+    try {
+      this.moved.emit({
+        recipe: this.recipe,
+        slotId: this.selectedSlot(),
+        applyToAllDays: false
+      });
+    } finally {
+      this.isMoving.set(false);
+    }
   }
 
   onEdit(): void {
@@ -69,6 +76,7 @@ export class MoveRecipeModalComponent implements OnInit, OnDestroy {
   }
 
   closeModal(): void {
+    this.isMoving.set(false);
     this.unlockBodyScroll();
     this.close.emit();
   }

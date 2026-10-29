@@ -119,6 +119,7 @@
         <button
           type="button"
           class="btn-cancel"
+          [disabled]="isMoving()"
           (click)="closeModal()"
         >
           Cancel
@@ -127,9 +128,17 @@
           type="button"
           id="btnConfirmMoveRecipe"
           class="btn-submit"
+          [disabled]="isMoving()"
           (click)="confirmMove()"
         >
-          <span>Move to Schedule</span>
+          @if (isMoving()) {
+            <span class="btn-spinner-wrap">
+              <span class="mini-spinner"></span>
+              <span>Moving...</span>
+            </span>
+          } @else {
+            <span>Move to Schedule</span>
+          }
         </button>
       </div>
 
@@ -138,6 +147,7 @@
           type="button"
           id="btnFooterEditRecipe"
           class="link-edit-recipe"
+          [disabled]="isMoving()"
           (click)="onEdit()"
           title="Edit or delete this recipe"
         >

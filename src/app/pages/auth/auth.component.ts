@@ -62,6 +62,7 @@ export class AuthComponent {
   }
 
   async handleSubmit(): Promise<void> {
+    if (this.auth.isSubmitting()) return;
     this.validationError.set(null);
     this.auth.authError.set(null);
 

@@ -265,6 +265,7 @@
           <button
             type="button"
             class="btn-cancel"
+            [disabled]="isSubmitting()"
             (click)="closeModal()"
           >
             Cancel
@@ -274,9 +275,15 @@
             type="button"
             id="btnSaveRecipe"
             class="btn-submit"
+            [disabled]="isSubmitting()"
             (click)="submitRecipe()"
           >
-            @if (mode === 'edit') {
+            @if (isSubmitting()) {
+              <span class="btn-spinner-wrap">
+                <span class="mini-spinner"></span>
+                <span>Saving...</span>
+              </span>
+            } @else if (mode === 'edit') {
               <span>Save</span>
             } @else {
               <span>Add</span>
@@ -292,6 +299,7 @@
                 type="button"
                 id="btnDeleteRecipe"
                 class="link-remove-schedule btn-delete-recipe"
+                [disabled]="isSubmitting()"
                 (click)="promptRemoveFromSchedule()"
                 title="Delete recipe from Additional Recipes"
               >
@@ -320,6 +328,7 @@
                 type="button"
                 id="btnRemoveFromSchedule"
                 class="link-remove-schedule btn-remove-schedule"
+                [disabled]="isSubmitting()"
                 (click)="promptRemoveFromSchedule()"
                 title="Remove from schedule and move to Additional Recipes"
               >
@@ -396,6 +405,7 @@
             <button
               type="button"
               class="btn-confirm-cancel"
+              [disabled]="isSubmitting()"
               (click)="cancelRemoveFromSchedule()"
             >
               Cancel
@@ -405,9 +415,17 @@
               id="btnConfirmRemove"
               class="btn-confirm-remove"
               [class.btn-confirm-danger]="!!editingAdditionalRecipe"
+              [disabled]="isSubmitting()"
               (click)="onRemoveFromSchedule()"
             >
-              {{ editingAdditionalRecipe ? 'Delete' : 'Remove' }}
+              @if (isSubmitting()) {
+                <span class="btn-spinner-wrap">
+                  <span class="mini-spinner"></span>
+                  <span>Processing...</span>
+                </span>
+              } @else {
+                <span>{{ editingAdditionalRecipe ? 'Delete' : 'Remove' }}</span>
+              }
             </button>
           </div>
         </div>

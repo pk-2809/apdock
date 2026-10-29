@@ -290,6 +290,15 @@ button {
   cursor: pointer;
   outline: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 /* ==========================================================================
@@ -370,6 +379,31 @@ body.modal-open {
   .icon-bubble,
   .cute-logo-img {
     animation: none !important;
+  }
+}
+
+/* Zero-shift action button spinner */
+.btn-spinner-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: miniSpin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes miniSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

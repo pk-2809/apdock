@@ -29,7 +29,9 @@
   width: 100%;
   max-width: 420px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   background: #0f1422;
   border-top: 1px solid rgba(255, 255, 255, 0.1);

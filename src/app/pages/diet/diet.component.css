@@ -62,7 +62,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
 }
 
@@ -283,7 +283,7 @@
   border-radius: 16px;
   padding: 14px 18px;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dish-card.clickable {
@@ -403,14 +403,119 @@
 }
 
 .skeleton-card {
-  height: 98px;
   border-radius: 16px;
   border: 1px solid var(--border-card);
-  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+/* 1:1 match with .dish-card: min-height 64px, padding 14px 18px */
+.skeleton-options-list .skeleton-dish-card {
+  min-height: 64px;
+  height: 64px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sk-dish-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sk-num-badge {
+  width: 32px;
+  height: 24px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+[data-theme='light'] .sk-num-badge {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sk-dish-name {
+  width: 55%;
+  height: 18px;
+  border-radius: 6px;
+}
+
+/* 1:1 match with .veg-item-card: min-height 66px, padding 14px 18px, border-radius 14px, gap 4px */
+.skeleton-veggies {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.skeleton-veg-row {
+  min-height: 66px;
+  height: 66px;
+  border-radius: 14px;
+  border: 1px solid var(--border-card);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
   box-sizing: border-box;
+}
+
+.sk-veg-name {
+  width: 45%;
+  height: 15px;
+  border-radius: 5px;
+}
+
+.sk-veg-cat {
+  width: 20%;
+  height: 11px;
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+/* 1:1 match with .clean-recipe-card: min-height 72px, padding 16px 18px, border-radius 14px, gap 10px */
+.skeleton-recipes-stack .skeleton-recipe-card {
+  min-height: 72px;
+  height: 72px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.sk-recipe-title {
+  width: 48%;
+  height: 16px;
+  border-radius: 5px;
+}
+
+.sk-ingredients-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sk-pill {
+  width: 48px;
+  height: 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sk-pill.w-med {
+  width: 62px;
+}
+
+.sk-pill.w-long {
+  width: 78px;
+}
+
+[data-theme='light'] .sk-pill {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .sk-line {
@@ -435,18 +540,6 @@
 .sk-meta {
   width: 50%;
   height: 12px;
-}
-
-.skeleton-veggies {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skeleton-veg-row {
-  height: 52px;
-  border-radius: 14px;
-  border: 1px solid var(--border-card);
 }
 
 /* ==========================================================================
@@ -489,7 +582,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-add-recipe:hover {
@@ -572,7 +665,7 @@
   gap: 10px;
   box-sizing: border-box;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }

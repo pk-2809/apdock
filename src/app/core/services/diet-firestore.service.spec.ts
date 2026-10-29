@@ -70,7 +70,7 @@ describe('DietFirestoreService', () => {
   });
 
   it('should gracefully return cached meals on fetchMeals when offline or in test env', async () => {
-    const result = await service.fetchMeals(50);
+    const result = await service.fetchMeals(true);
     expect(result.length).toBeGreaterThan(0);
     expect(result.some(m => m.id === 'coffee')).toBe(true);
   });
