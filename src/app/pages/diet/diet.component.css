@@ -395,7 +395,8 @@
   }
 }
 
-.skeleton-options-list {
+.skeleton-options-list,
+.skeleton-recipes-stack {
   display: flex;
   flex-direction: column;
   gap: 10px;

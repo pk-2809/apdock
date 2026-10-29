@@ -1,5 +1,7 @@
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { AuthService } from './auth.service';
+import { DietFirestoreService } from './diet-firestore.service';
+import { MealDocument } from '../models/meal.model';
 
 export type DietGoal = 'loss' | 'gain';
 export type DietType = 'veg' | 'nonveg' | 'both';
@@ -88,6 +90,7 @@ export const EDITED_ADDITIONAL_RECIPES_STORAGE_KEY = 'apdock_edited_additional_r
 })
 export class DietService {
   private readonly auth = inject(AuthService);
+  readonly firestoreService = inject(DietFirestoreService);
 
   readonly preference = signal<DietPreference | null>(this.loadStoredPreference());
 
@@ -163,47 +166,165 @@ export class DietService {
     return current;
   }
 
-  private dietDatabase: Record<DietGoal, Record<DietType, Record<DayOfWeek, DayDietPlan>>> | null = null;
-  private dietDbPromise: Promise<Record<DietGoal, Record<DietType, Record<DayOfWeek, DayDietPlan>>>> | null = null;
+  private toMealOption(doc: MealDocument): MealOption {
+    return {
+      id: doc.id,
+      name: doc.name,
+      description: doc.description || (doc.mealRole ? `${doc.mealRole} option` : 'Nutritious option'),
+      calories: doc.calories ?? 300,
+      protein: doc.protein ?? 15,
+      carbs: doc.carbs ?? 30,
+      fat: doc.fat ?? 10,
+      prepTimeMinutes: doc.prepTimeMinutes ?? 10,
+      veggies: doc.ingredients || []
+    };
+  }
+
+  private createFallbackSlot(
+    slotId: 'breakfast' | 'lunch' | 'dinner',
+    slotTitle: string,
+    slotTime: string,
+    day: DayOfWeek
+  ): MealSlot {
+    return {
+      slotId,
+      slotTitle,
+      slotTime,
+      primaryMeal: {
+        id: `${day}-placeholder-${slotId.charAt(0)}`,
+        name: 'Meal plan not configured yet',
+        description: `Add a ${slotId} meal to Firestore to customize.`,
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        prepTimeMinutes: 0,
+        veggies: []
+      },
+      alternativeOptions: []
+    };
+  }
+
+  buildDayPlanFromMeals(day: DayOfWeek, goal: DietGoal, dietType: DietType): DayDietPlan {
+    const allMeals = this.firestoreService.meals();
+    const dayNorm = day.toLowerCase();
+
+    // 1. Filter meals matching day, goal, dietType
+    const matchingMeals = allMeals.filter(m => {
+      // Day check: empty array means all days, otherwise must include current day
+      if (m.day && m.day.length > 0) {
+        const matchesDay = m.day.some(d => d.toLowerCase() === dayNorm);
+        if (!matchesDay) return false;
+      }
+
+      // Goal check:
+      if (m.goals && m.goals.length > 0) {
+        if (goal === 'loss') {
+          const match = m.goals.some(g => ['weight_loss', 'loss', 'fat_loss', 'all'].includes(g.toLowerCase()));
+          if (!match) return false;
+        } else if (goal === 'gain') {
+          const match = m.goals.some(g => ['weight_gain', 'gain', 'muscle_gain', 'all'].includes(g.toLowerCase()));
+          if (!match) return false;
+        }
+      }
+
+      // DietType check:
+      if (dietType === 'veg') {
+        const lower = (m.dietType || '').toLowerCase();
+        if (lower.includes('non')) return false;
+      } else if (dietType === 'nonveg') {
+        const lower = (m.dietType || '').toLowerCase();
+        if (lower === 'veg' || lower === 'vegetarian') return false;
+      }
+      return true;
+    });
+
+    // 2. Group by category
+    const breakfastDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'breakfast');
+    const lunchDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'lunch');
+    const dinnerDocs = matchingMeals.filter(m => (m.category || '').toLowerCase() === 'dinner');
+
+    const createSlot = (
+      slotId: 'breakfast' | 'lunch' | 'dinner',
+      slotTitle: string,
+      slotTime: string,
+      docs: MealDocument[]
+    ): MealSlot => {
+      if (docs.length === 0) {
+        return this.createFallbackSlot(slotId, slotTitle, slotTime, day);
+      }
+      const primary = this.toMealOption(docs[0]);
+      const alternatives = docs.slice(1).map(d => this.toMealOption(d));
+      return {
+        slotId,
+        slotTitle,
+        slotTime,
+        primaryMeal: primary,
+        alternativeOptions: alternatives
+      };
+    };
+
+    const meals: MealSlot[] = [
+      createSlot('breakfast', 'Breakfast', '8:00 AM', breakfastDocs),
+      createSlot('lunch', 'Lunch', '1:00 PM', lunchDocs),
+      createSlot('dinner', 'Dinner', '8:00 PM', dinnerDocs)
+    ];
+
+    // 3. Extract fresh veggies / ingredients from matching meals
+    const veggieSet = new Set<string>();
+    const todayVeggies: { name: string; category: string }[] = [];
+
+    matchingMeals.forEach(m => {
+      (m.ingredients || []).forEach(ing => {
+        const trimmed = ing.trim();
+        const key = trimmed.toLowerCase();
+        if (trimmed && !veggieSet.has(key)) {
+          veggieSet.add(key);
+          const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+          todayVeggies.push({ name: capitalized, category: 'Fresh' });
+        }
+      });
+    });
+
+    return {
+      day,
+      tagline: 'Personalized Daily Nutrition Plan',
+      totalCalories: meals.reduce((sum, s) => sum + s.primaryMeal.calories, 0),
+      totalProtein: meals.reduce((sum, s) => sum + s.primaryMeal.protein, 0),
+      totalCarbs: meals.reduce((sum, s) => sum + s.primaryMeal.carbs, 0),
+      totalFat: meals.reduce((sum, s) => sum + s.primaryMeal.fat, 0),
+      meals,
+      todayVeggies
+    };
+  }
 
   async loadDietDatabase(): Promise<Record<DietGoal, Record<DietType, Record<DayOfWeek, DayDietPlan>>>> {
-    if (this.dietDatabase) {
-      return this.dietDatabase;
-    }
-    if (!this.dietDbPromise) {
-      this.dietDbPromise = import('../data/diet-database').then(m => {
-        this.dietDatabase = m.DIET_DATABASE;
-        return this.dietDatabase;
+    await this.firestoreService.fetchMeals();
+    const days: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const goals: DietGoal[] = ['loss', 'gain'];
+    const dietTypes: DietType[] = ['veg', 'nonveg', 'both'];
+
+    const db = {} as Record<DietGoal, Record<DietType, Record<DayOfWeek, DayDietPlan>>>;
+    goals.forEach(g => {
+      db[g] = {} as Record<DietType, Record<DayOfWeek, DayDietPlan>>;
+      dietTypes.forEach(dt => {
+        db[g][dt] = {} as Record<DayOfWeek, DayDietPlan>;
+        days.forEach(d => {
+          db[g][dt][d] = this.buildDayPlanFromMeals(d, g, dt);
+        });
       });
-    }
-    return this.dietDbPromise;
+    });
+    return db;
   }
 
   getDayPlan(day: DayOfWeek, goal: DietGoal, dietType: DietType): DayDietPlan {
-    if (!this.dietDatabase) {
-      return this.enrichDayPlanWithCustomMeals(this.getFallbackPlan(day), day);
-    }
-    const plans = this.dietDatabase[goal][dietType];
-    const basePlan = plans[day] || plans['Wednesday'];
+    const basePlan = this.buildDayPlanFromMeals(day, goal, dietType);
     return this.enrichDayPlanWithCustomMeals(basePlan, day);
   }
 
   async fetchDayPlan(day: DayOfWeek, goal: DietGoal, dietType: DietType): Promise<DayDietPlan> {
-    await this.loadDietDatabase();
+    await this.firestoreService.fetchMeals();
     return this.getDayPlan(day, goal, dietType);
-  }
-
-  private getFallbackPlan(day: DayOfWeek): DayDietPlan {
-    return {
-      day,
-      tagline: 'Personalized Daily Nutrition Plan',
-      totalCalories: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      meals: [],
-      todayVeggies: []
-    };
   }
 
   getCurrentTimeSlot(): 'breakfast' | 'lunch' | 'dinner' {
@@ -581,11 +702,47 @@ export class DietService {
     return newRecipe;
   }
 
+  normalizeDietType(type?: string): DietType {
+    const lower = (type || '').toLowerCase();
+    if (lower.includes('non')) return 'nonveg';
+    if (lower.includes('veg')) return 'veg';
+    return 'both';
+  }
+
   getAdditionalRecipes(dietType: DietType, goal: DietGoal): AdditionalRecipe[] {
     const removedSet = new Set(this.removedAdditionalRecipeIds());
     const editedMap = this.editedAdditionalRecipes();
-    const combined = [...this.customRecipes(), ...ADDITIONAL_RECIPES];
-    return combined
+
+    // 1. Gather alternate meals from Firestore (category="alternate")
+    const firestoreAlternates: AdditionalRecipe[] = this.firestoreService
+      .meals()
+      .filter(m => (m.category || '').toLowerCase() === 'alternate')
+      .map(m => ({
+        id: m.id,
+        title: m.name,
+        category: 'High Protein' as const,
+        calories: m.calories ?? 250,
+        protein: m.protein ?? 15,
+        prepTime: m.prepTimeMinutes ? `${m.prepTimeMinutes} mins` : '10 mins',
+        dietType: this.normalizeDietType(m.dietType),
+        imageIcon: m.mealRole === 'beverage' ? '☕' : '🥗',
+        description: m.description || `Fresh recipe with ${(m.ingredients || []).slice(0, 3).join(', ')}.`,
+        keyIngredients: m.ingredients || []
+      }));
+
+    const combined = [...this.customRecipes(), ...firestoreAlternates, ...ADDITIONAL_RECIPES];
+
+    // Deduplicate by ID
+    const seen = new Set<string>();
+    const deduped: AdditionalRecipe[] = [];
+    for (const r of combined) {
+      if (!seen.has(r.id)) {
+        seen.add(r.id);
+        deduped.push(r);
+      }
+    }
+
+    return deduped
       .filter(r => !removedSet.has(r.id))
       .map(r => {
         const edit = editedMap[r.id];

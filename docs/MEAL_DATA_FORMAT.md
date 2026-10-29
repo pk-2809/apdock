@@ -1,148 +1,84 @@
-# Meal Data Format Reference
+# Firestore Meal Data Format & Architecture Reference
 
-All meal data lives in two files:
+## 1. Overview & Architecture
 
-| File | What to edit |
-|------|-------------|
-| `src/app/core/data/diet-database.ts` | Weekly day plans (breakfast / lunch / dinner per goal × diet-type × day) |
-| `src/app/core/services/diet.service.ts` | `ADDITIONAL_RECIPES` array (recipe cards shown below the day plan) |
+All meal data is stored in **Cloud Firestore** under the top-level collection:
+`/meals/{id}`
+
+The client uses an **offline-first, low-network-optimized Stale-While-Revalidate (SWR)** architecture:
+- **Instant Paint (0ms)**: Reads from `localStorage` cache immediately on app launch.
+- **Background Sync**: Silently queries Firestore `meals` collection in the background with a 4.5s timeout.
+- **Shimmer Loaders**: If day data is loading or being fetched for the first time, skeleton shimmer cards are displayed for Meals, Vegetables, and Additional Recipes without layout shift.
+- **Resilient Offline**: Custom meals, moved recipes, and edits are stored locally and enriched on top of the Firestore catalog.
 
 ---
 
-## 1 · One Day Plan (`DayDietPlan`)
+## 2. Meal JSON Format
 
-```jsonc
+Each meal is a flat, lightweight document:
+
+```json
 {
-  "day": "Monday",               // "Monday" | "Tuesday" | … | "Sunday"
-  "tagline": "High Fiber Day",   // Short headline shown below the day chip
-  "totalCalories": 1540,
-  "totalProtein":  78,           // grams
-  "totalCarbs":   165,           // grams
-  "totalFat":      42,           // grams
-  "todayVeggies": [
-    { "name": "Fresh Spinach (Palak)", "category": "Leafy Green" },
-    { "name": "Red Tomatoes",          "category": "Base" }
-  ],
-  "meals": [ /* 3 MealSlots: breakfast, lunch, dinner */ ]
+  "id": "coffee",
+  "name": "Coffee",
+  "category": "breakfast",
+  "mealRole": "beverage",
+  "dietType": "vegetarian",
+  "goals": ["weight_gain", "weight_loss"],
+  "ingredients": ["coffee", "milk", "water"],
+  "day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 }
 ```
 
+### Field Definitions
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique identifier (e.g. `"coffee"`, `"oats_bowl"`). Used as document ID in Firestore. |
+| `name` | `string` | Human-readable title of the dish (e.g. `"Coffee"`, `"Paneer Rice Bowl"`). |
+| `category` | `string` | Slot placement: `"breakfast"`, `"lunch"`, `"dinner"`, or `"alternate"`. |
+| `mealRole` | `string` (optional) | Role of the item: `"main"`, `"beverage"`, `"side"`, `"snack"`. |
+| `dietType` | `string` | `"vegetarian"`, `"non-vegetarian"`, `"veg"`, `"nonveg"`, or `"both"`. |
+| `goals` | `string[]` | Target goals: `["weight_gain", "weight_loss"]`, `["loss"]`, `["gain"]`, or `["all"]`. |
+| `ingredients` | `string[]` | List of ingredients. Used for the dish description and automatically populates the "Vegetables Required" section. |
+| `day` | `string[]` | Array of days: `["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]`. Leave empty `[]` to apply to all 7 days. |
+
 ---
 
-## 2 · One Meal Slot (`MealSlot`)
+## 3. Alternatives Section (`category: "alternate"`)
 
-```jsonc
+When a meal has `"category": "alternate"`, it automatically appears in the **Additional Recipes / Alternatives** section at the bottom of the Diet page:
+
+```json
 {
-  "slotId":    "breakfast",   // "breakfast" | "lunch" | "dinner"
-  "slotTitle": "Breakfast",
-  "slotTime":  "8:30 AM",
-  "primaryMeal": { /* MealOption */ },
-  "alternativeOptions": []    // 0 or more swap options
+  "id": "green_tea",
+  "name": "Green Tea & Lemon",
+  "category": "alternate",
+  "mealRole": "beverage",
+  "dietType": "vegetarian",
+  "goals": ["weight_gain", "weight_loss"],
+  "ingredients": ["green tea leaves", "lemon", "warm water", "honey"],
+  "day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 }
 ```
 
+Users can tap on any recipe in this section to view its ingredients or click **Move to Schedule** to place it into their Breakfast, Lunch, or Dinner plan.
+
 ---
 
-## 3 · One Meal Option (`MealOption`)
+## 4. How to Seed Meals to Firestore
 
-```jsonc
-{
-  "id":              "mon-loss-veg-b1",      // unique slug
-  "name":            "Sprouted Moong Poha",
-  "description":     "Flaked rice with sprouts and lemon.",
-  "calories":        360,
-  "protein":          18,
-  "carbs":            48,
-  "fat":               9,
-  "prepTimeMinutes":  15,
-  "veggies": ["Green Chillies", "Onions", "Lemon"]
-}
+You can seed or update meals in Firestore at any time:
+
+### Option A: Using the CLI script
+Create a JSON file with an array of meals (e.g. `my-meals.json`) and run:
+```bash
+node scripts/seed-meals-firestore.mjs my-meals.json
+```
+If no file is provided, it seeds the built-in balanced defaults:
+```bash
+node scripts/seed-meals-firestore.mjs
 ```
 
----
-
-## 4 · One Additional Recipe (`AdditionalRecipe`)
-
-```jsonc
-{
-  "id":          "ar-101",
-  "title":       "Masala Oats Bowl",
-  "category":    "Quick 10-Min",   // "High Protein" | "Quick 10-Min" | "Nutrient Dense" | "Smoothie & Detox"
-  "calories":    260,
-  "protein":      11,
-  "prepTime":    "10 mins",
-  "dietType":    "veg",            // "veg" | "nonveg" | "both"
-  "imageIcon":   "🍲",
-  "description": "Oats with tomatoes, peas, and cumin.",
-  "keyIngredients": ["Rolled Oats", "Green Peas", "Tomatoes"],
-  "instructions": [
-    "Heat ghee; add cumin.",
-    "Add veggies; sauté 2 min.",
-    "Stir in oats and water. Simmer 5 min."
-  ]
-}
-```
-
----
-
-## 5 · Minimal Monday example (loss → veg)
-
-Replace `placeholderDay('Monday')` in `diet-database.ts`:
-
-```typescript
-Monday: {
-  day: 'Monday',
-  tagline: 'Metabolic Kickstart',
-  totalCalories: 1520,
-  totalProtein: 80,
-  totalCarbs: 160,
-  totalFat: 40,
-  todayVeggies: [
-    { name: 'Fresh Spinach', category: 'Leafy Green' },
-    { name: 'Tomatoes',      category: 'Base' },
-    { name: 'Cucumber',      category: 'Salad' }
-  ],
-  meals: [
-    {
-      slotId: 'breakfast', slotTitle: 'Breakfast', slotTime: '8:00 AM',
-      primaryMeal: {
-        id: 'mon-loss-veg-b1', name: 'Sprouted Moong Poha',
-        description: 'Flaked rice with sprouts, peanuts, and lemon.',
-        calories: 360, protein: 18, carbs: 48, fat: 9,
-        prepTimeMinutes: 15, veggies: ['Green Chillies', 'Onions', 'Lemon']
-      },
-      alternativeOptions: []
-    },
-    {
-      slotId: 'lunch', slotTitle: 'Lunch', slotTime: '1:30 PM',
-      primaryMeal: {
-        id: 'mon-loss-veg-l1', name: 'Palak Dal + 2 Roti',
-        description: 'Spinach lentil curry with whole wheat flatbreads.',
-        calories: 480, protein: 24, carbs: 62, fat: 11,
-        prepTimeMinutes: 25, veggies: ['Spinach', 'Tomatoes', 'Garlic']
-      },
-      alternativeOptions: []
-    },
-    {
-      slotId: 'dinner', slotTitle: 'Dinner', slotTime: '8:00 PM',
-      primaryMeal: {
-        id: 'mon-loss-veg-d1', name: 'Grilled Paneer + Tomato Soup',
-        description: 'Herb-marinated cottage cheese with warm tomato broth.',
-        calories: 380, protein: 22, carbs: 26, fat: 14,
-        prepTimeMinutes: 20, veggies: ['Bell Peppers', 'Tomatoes', 'Garlic']
-      },
-      alternativeOptions: []
-    }
-  ]
-},
-```
-
----
-
-## 6 · Checklist before giving me the data
-
-- Every day needs **3 slots**: `breakfast`, `lunch`, `dinner`
-- **IDs must be unique** across the whole file
-- `dietType` on AdditionalRecipe: `"veg"` | `"nonveg"` | `"both"`
-- `totalCalories` / macros on `DayDietPlan` are totals **you** provide (not auto-summed)
-- Days you don't configure yet can stay as `placeholderDay('...')` 
+### Option B: Firebase Console
+Navigate to [Firebase Console](https://console.firebase.google.com/) -> Firestore Database -> `meals` collection -> Add document. Set Document ID to `meal.id` and add the fields matching the schema above.

@@ -196,26 +196,39 @@
           </button>
         </div>
 
-        <div class="recipes-stack">
-          @for (recipe of additionalRecipes(); track recipe.id) {
-            <article
-              class="clean-recipe-card clickable"
-              (click)="openRecipeModal(recipe)"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="'Move ' + recipe.title + ' to day meal schedule'"
-            >
-              <h3 class="recipe-name">{{ recipe.title }}</h3>
+        @if (isLoadingDay()) {
+          <div class="skeleton-recipes-stack" aria-busy="true" aria-label="Loading additional recipes">
+            <div class="skeleton-card shimmer-wave">
+              <div class="sk-line sk-title"></div>
+              <div class="sk-line sk-body"></div>
+            </div>
+            <div class="skeleton-card shimmer-wave">
+              <div class="sk-line sk-title"></div>
+              <div class="sk-line sk-body"></div>
+            </div>
+          </div>
+        } @else {
+          <div class="recipes-stack ease-in">
+            @for (recipe of additionalRecipes(); track recipe.id) {
+              <article
+                class="clean-recipe-card clickable"
+                (click)="openRecipeModal(recipe)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Move ' + recipe.title + ' to day meal schedule'"
+              >
+                <h3 class="recipe-name">{{ recipe.title }}</h3>
 
-              <!-- Key Ingredients / Bottom Veggies Only -->
-              <div class="recipe-ingredients-strip">
-                @for (ing of recipe.keyIngredients; track ing) {
-                  <span class="recipe-ing-item">{{ ing }}</span>
-                }
-              </div>
-            </article>
-          }
-        </div>
+                <!-- Key Ingredients / Bottom Veggies Only -->
+                <div class="recipe-ingredients-strip">
+                  @for (ing of recipe.keyIngredients; track ing) {
+                    <span class="recipe-ing-item">{{ ing }}</span>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
       </section>
 
     </div>

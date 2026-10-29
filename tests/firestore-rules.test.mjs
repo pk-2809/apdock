@@ -84,6 +84,13 @@ describe('Firestore Security Rules - Option B Hardened Rules', () => {
       await assertFails(getDoc(doc(db, 'other', 'item')));
       await assertFails(setDoc(doc(db, 'other', 'item'), { key: 'val' }));
     });
+
+    it('denies unauthenticated read and write on /meals', async () => {
+      const db = testEnv.unauthenticatedContext().firestore();
+      await assertFails(getDocs(collection(db, 'meals')));
+      await assertFails(getDoc(doc(db, 'meals', 'coffee')));
+      await assertFails(setDoc(doc(db, 'meals', 'coffee'), { name: 'Coffee' }));
+    });
   });
 
   // 2. Signed-in user boundaries: list /usernames denied & reading /users/{otherUid} denied
@@ -129,6 +136,25 @@ describe('Firestore Security Rules - Option B Hardened Rules', () => {
           lastLoginAt: serverTimestamp()
         })
       );
+    });
+
+    it('allows signed-in user to read /meals collection and documents', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'meals', 'coffee'), {
+          id: 'coffee',
+          name: 'Coffee',
+          category: 'breakfast'
+        });
+      });
+
+      const aliceDb = testEnv.authenticatedContext('user_alice').firestore();
+      await assertSucceeds(getDocs(collection(aliceDb, 'meals')));
+      await assertSucceeds(getDoc(doc(aliceDb, 'meals', 'coffee')));
+    });
+
+    it('denies signed-in user from writing to /meals', async () => {
+      const aliceDb = testEnv.authenticatedContext('user_alice').firestore();
+      await assertFails(setDoc(doc(aliceDb, 'meals', 'coffee'), { name: 'Hacked Coffee' }));
     });
   });
 
