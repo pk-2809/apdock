@@ -540,10 +540,6 @@ export class DietComponent implements OnInit, AfterViewInit {
   }
 
   openEditScheduleRecipeModal(dish: MealOption): void {
-    if (dish.id.includes('placeholder')) {
-      this.openAddRecipeModal('day_meal');
-      return;
-    }
     this.modalMode.set('edit');
     this.editingMeal.set(dish);
     this.editingAdditionalRecipe.set(null);

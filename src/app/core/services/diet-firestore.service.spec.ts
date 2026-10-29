@@ -19,10 +19,9 @@ describe('DietFirestoreService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should initialize with DEFAULT_MEALS when cache is empty', () => {
+  it('should initialize with empty meals when cache is empty', () => {
     const meals = service.meals();
-    expect(meals.length).toBeGreaterThan(0);
-    expect(meals.some(m => m.id === 'coffee')).toBe(true);
+    expect(meals).toEqual([]);
   });
 
   it('should load meals from localStorage cache if present', () => {
@@ -70,6 +69,18 @@ describe('DietFirestoreService', () => {
   });
 
   it('should gracefully return cached meals on fetchMeals when offline or in test env', async () => {
+    service.meals.set([
+      {
+        id: 'coffee',
+        name: 'Coffee',
+        category: 'breakfast',
+        mealRole: 'beverage',
+        dietType: 'vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['coffee', 'milk', 'water'],
+        day: ['Monday']
+      }
+    ]);
     const result = await service.fetchMeals(true);
     expect(result.length).toBeGreaterThan(0);
     expect(result.some(m => m.id === 'coffee')).toBe(true);
