@@ -351,9 +351,10 @@ The spacing architecture follows a strict 4px/8px modular rhythm:
   - `max-width: 480px`, `padding: 16px 16px 28px`, `gap: 16px`.
 - **Top Navigation (`.nav-back-btn`)**:
   - Pill `border-radius: 9999px`, `padding: 7px 13px`, `font-size: 13px`, `600 weight`, chevron left icon `15x15px`.
-- **Circular Week Queue (`.week-queue-track`)**:
-  - Section negative margin: `0 -16px` (spans full viewport edge-to-edge).
-  - Scroll snap: `x mandatory`, padding `0 calc(50% - 31px)` for dead-center active chip alignment.
+- **Circular Week Queue (`.week-queue-track` & `.week-queue-section`)**:
+  - Section negative margin: `-12px -16px -16px` (maintains vertical rhythm while accommodating glow).
+  - Edge Fades: CSS `mask-image: linear-gradient(to right, transparent 0%, black 24px, black calc(100% - 24px), transparent 100%)` for smooth fade out at screen edges.
+  - Scroll snap: `x mandatory`, padding `16px calc(50% - 31px) 24px` (centering active chip and providing generous vertical breathing room so the emerald glow is never clipped by `overflow-x`).
   - Day Chip (`.day-chip`): `width: 62px`, `height: 52px`, `border-radius: 16px`, `background: var(--bg-surface)`.
   - Active Chip: background `#10b981`, text `#ffffff`, border `#10b981`, shadow `0 4px 16px rgba(16, 185, 129, 0.4)`.
   - Active press physics: `transform: scale(0.93)`.
