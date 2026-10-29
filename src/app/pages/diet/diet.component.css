@@ -203,13 +203,17 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: none;
+  /* Reserve 1px for the border on all sides at all times so the active state
+     colour change never causes a layout reflow / UI shift on click */
+  border: 1px solid transparent;
   border-radius: 11px;
   color: var(--text-secondary);
   font-family: var(--font-sans);
   padding: 10px 8px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color   0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              color          0.2s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
 }
 
@@ -220,7 +224,8 @@
 .segmented-btn.active {
   background: var(--btn-bg);
   color: var(--text-primary);
-  border: 1px solid var(--border-card);
+  /* Only the colour changes — the 1px space is already reserved above */
+  border-color: var(--border-card);
 }
 
 [data-theme='dark'] .segmented-btn.active {
