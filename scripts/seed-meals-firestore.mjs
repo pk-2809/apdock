@@ -3,153 +3,131 @@
  * Seed Meals to Firestore
  * ───────────────────────
  * Reads a JSON file containing an array of MealDocument objects
- * and writes each to /meals/{id} in Firestore.
+ * and writes each to /meals/{id} in Firestore using the Google/Firebase credentials.
  *
  * Usage:
  *   node scripts/seed-meals-firestore.mjs [path-to-meals.json]
- *
- * Example meal format in JSON:
- * [
- *   {
- *     "id": "coffee",
- *     "name": "Coffee",
- *     "category": "breakfast",
- *     "mealRole": "beverage",
- *     "dietType": "vegetarian",
- *     "goals": ["weight_gain", "weight_loss"],
- *     "ingredients": ["coffee", "milk", "water"],
- *     "day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
- *   }
- * ]
+ *   npm run seed:meals
  */
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import https from 'node:https';
 
-const firebaseConfig = {
-  projectId: 'apdock',
-  appId: '1:464048462179:web:8b5885c2e3052dc4421b56',
-  storageBucket: 'apdock.firebasestorage.app',
-  apiKey: 'AIzaSyA06ZMEYe0PZUYXJRaHAv1axV2UfdIbYEQ',
-  authDomain: 'apdock.firebaseapp.com',
-  messagingSenderId: '464048462179',
-  projectNumber: '464048462179'
-};
+const DEFAULT_JSON_PATH = 'meals.json';
 
-const DEFAULT_SAMPLE_MEALS = [
-  {
-    id: 'coffee',
-    name: 'Coffee',
-    category: 'breakfast',
-    mealRole: 'beverage',
-    dietType: 'vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['coffee', 'milk', 'water'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  {
-    id: 'oats_bowl',
-    name: 'Warm Cinnamon Oats Bowl',
-    category: 'breakfast',
-    mealRole: 'main',
-    dietType: 'vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['rolled oats', 'milk', 'cinnamon', 'honey'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  {
-    id: 'paneer_rice_bowl',
-    name: 'Paneer & Brown Rice Bowl',
-    category: 'lunch',
-    mealRole: 'main',
-    dietType: 'vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['paneer', 'brown rice', 'broccoli', 'bell pepper', 'olive oil'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  {
-    id: 'grilled_chicken_salad',
-    name: 'Grilled Chicken & Herb Salad',
-    category: 'lunch',
-    mealRole: 'main',
-    dietType: 'non-vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['chicken breast', 'lettuce', 'cucumber', 'cherry tomatoes', 'olive oil'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  {
-    id: 'mixed_veg_dal',
-    name: 'Mixed Veg Dal Khichdi',
-    category: 'dinner',
-    mealRole: 'main',
-    dietType: 'vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['yellow moong dal', 'rice', 'spinach', 'carrots', 'ghee'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  {
-    id: 'green_tea',
-    name: 'Green Tea & Lemon',
-    category: 'alternate',
-    mealRole: 'beverage',
-    dietType: 'vegetarian',
-    goals: ['weight_gain', 'weight_loss'],
-    ingredients: ['green tea leaves', 'lemon', 'warm water', 'honey'],
-    day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+function getAccessToken() {
+  // 1. Try Firebase CLI configstore
+  try {
+    const configPath = path.join(os.homedir(), '.config/configstore/firebase-tools.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (config.tokens && config.tokens.access_token) {
+        return config.tokens.access_token;
+      }
+    }
+  } catch {}
+
+  // 2. Try GOOGLE_OAUTH_ACCESS_TOKEN env var
+  if (process.env.GOOGLE_OAUTH_ACCESS_TOKEN) {
+    return process.env.GOOGLE_OAUTH_ACCESS_TOKEN;
   }
-];
+
+  return null;
+}
 
 async function main() {
-  const jsonPathArg = process.argv[2];
-  let meals = DEFAULT_SAMPLE_MEALS;
+  const targetFile = process.argv[2] || DEFAULT_JSON_PATH;
+  const fullPath = path.resolve(process.cwd(), targetFile);
 
-  if (jsonPathArg) {
-    const fullPath = path.resolve(process.cwd(), jsonPathArg);
-    if (!fs.existsSync(fullPath)) {
-      console.error(`File not found: ${fullPath}`);
-      process.exit(1);
-    }
-    const raw = fs.readFileSync(fullPath, 'utf8');
-    meals = JSON.parse(raw);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`❌ Meals JSON file not found at: ${fullPath}`);
+    process.exit(1);
   }
 
-  console.log(`Found ${meals.length} meals to seed to Firestore...`);
+  const raw = fs.readFileSync(fullPath, 'utf8');
+  const mealsData = JSON.parse(raw);
 
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-  const db = getFirestore(app);
+  if (!Array.isArray(mealsData) || mealsData.length === 0) {
+    console.error('❌ Meals JSON must contain a non-empty array of meals.');
+    process.exit(1);
+  }
 
-  for (const meal of meals) {
+  console.log(`\n📋 Loaded ${mealsData.length} meals from ${path.basename(fullPath)}`);
+
+  const token = getAccessToken();
+  if (!token) {
+    console.error('❌ Could not locate Firebase CLI credentials. Please run `npx firebase-tools login`.');
+    process.exit(1);
+  }
+
+  console.log('🚀 Syncing meals to Firestore collection /meals on project apdock...');
+
+  let successCount = 0;
+  for (const meal of mealsData) {
     if (!meal.id) {
-      console.warn('Skipping meal without id:', meal);
+      console.warn('⚠️ Skipping meal without id:', meal);
       continue;
     }
-    const docRef = doc(db, 'meals', meal.id);
-    await setDoc(docRef, {
-      id: meal.id,
-      name: meal.name,
-      category: meal.category || 'breakfast',
-      mealRole: meal.mealRole || 'main',
-      dietType: meal.dietType || 'vegetarian',
-      goals: Array.isArray(meal.goals) ? meal.goals : [],
-      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
-      day: Array.isArray(meal.day) ? meal.day : [],
-      description: meal.description || '',
-      calories: meal.calories ?? null,
-      protein: meal.protein ?? null,
-      carbs: meal.carbs ?? null,
-      fat: meal.fat ?? null,
-      prepTimeMinutes: meal.prepTimeMinutes ?? null
+
+    const fields = {
+      id: { stringValue: meal.id },
+      name: { stringValue: meal.name },
+      category: { stringValue: meal.category || 'breakfast' },
+      mealRole: { stringValue: meal.mealRole || 'main' },
+      dietType: { stringValue: meal.dietType || 'vegetarian' },
+      goals: {
+        arrayValue: {
+          values: (Array.isArray(meal.goals) ? meal.goals : []).map(g => ({ stringValue: String(g) }))
+        }
+      },
+      ingredients: {
+        arrayValue: {
+          values: (Array.isArray(meal.ingredients) ? meal.ingredients : []).map(i => ({ stringValue: String(i) }))
+        }
+      },
+      day: {
+        arrayValue: {
+          values: (Array.isArray(meal.day) ? meal.day : []).map(d => ({ stringValue: String(d) }))
+        }
+      }
+    };
+
+    const body = JSON.stringify({ fields });
+
+    const status = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'firestore.googleapis.com',
+        path: `/v1/projects/apdock/databases/(default)/documents/meals/${encodeURIComponent(meal.id)}`,
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body)
+        }
+      }, res => {
+        let respData = '';
+        res.on('data', chunk => respData += chunk);
+        res.on('end', () => resolve(res.statusCode));
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
     });
-    console.log(`✔ Saved /meals/${meal.id} (${meal.name})`);
+
+    if (status === 200) {
+      successCount++;
+      process.stdout.write(`✔ [${successCount}/${mealsData.length}] /meals/${meal.id}\n`);
+    } else {
+      console.error(`❌ Failed to upsert ${meal.id}, HTTP status: ${status}`);
+    }
   }
 
-  console.log('✅ Seeding complete!');
-  process.exit(0);
+  console.log(`\n🎉 Successfully synced all ${successCount}/${mealsData.length} meals to Firestore!\n`);
 }
 
 main().catch(err => {
-  console.error('Failed to seed meals:', err);
+  console.error('Fatal error during sync:', err);
   process.exit(1);
 });

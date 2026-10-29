@@ -7,7 +7,8 @@
     "dev": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "seed:meals": "node scripts/seed-meals-firestore.mjs meals.json"
   },
   "private": true,
   "packageManager": "npm@10.9.8",
