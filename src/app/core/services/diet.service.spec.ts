@@ -284,5 +284,83 @@ describe('DietService', () => {
     expect(currentList.length).toBe(initialCount - 1);
     expect(currentList.some(r => r.id === seeded.id)).toBe(false);
   });
+
+  it('should load backend additional_recipe meals from firestoreService into getAdditionalRecipes', () => {
+    service.firestoreService.meals.set([
+      {
+        id: 'kadhi',
+        name: 'Kadhi',
+        category: 'additional_recipe',
+        mealRole: 'component',
+        dietType: 'vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['curd', 'besan', 'onion', 'turmeric', 'red_chilli', 'spices'],
+        day: []
+      },
+      {
+        id: 'egg-curry',
+        name: 'Egg Curry',
+        category: 'additional_recipe',
+        mealRole: 'component',
+        dietType: 'non_vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['egg', 'onion', 'tomato', 'ginger', 'garlic', 'oil', 'spices'],
+        day: []
+      },
+      {
+        id: 'masoor-dal',
+        name: 'Masoor Dal',
+        category: 'additional_recipe',
+        mealRole: 'component',
+        dietType: 'vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['masoor_dal', 'turmeric', 'cumin', 'salt'],
+        day: []
+      },
+      {
+        id: 'malka-dal',
+        name: 'Malka Dal',
+        category: 'additional_recipe',
+        mealRole: 'component',
+        dietType: 'vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['masoor_malka_dal', 'turmeric', 'cumin', 'salt', 'spices'],
+        day: []
+      },
+      {
+        id: 'sandwich',
+        name: 'Sandwich',
+        category: 'additional_recipe',
+        mealRole: 'main',
+        dietType: 'vegetarian',
+        goals: ['weight_gain', 'weight_loss'],
+        ingredients: ['bread', 'onion', 'tomato', 'cucumber', 'butter'],
+        day: []
+      }
+    ]);
+
+    // For veg dietType: 4 veg recipes should show, egg-curry should be filtered out
+    const vegList = service.getAdditionalRecipes('veg', 'loss');
+    expect(vegList.some(r => r.id === 'kadhi')).toBe(true);
+    expect(vegList.some(r => r.id === 'masoor-dal')).toBe(true);
+    expect(vegList.some(r => r.id === 'malka-dal')).toBe(true);
+    expect(vegList.some(r => r.id === 'sandwich')).toBe(true);
+    expect(vegList.some(r => r.id === 'egg-curry')).toBe(false);
+
+    // Verify icons
+    const kadhi = vegList.find(r => r.id === 'kadhi')!;
+    expect(kadhi.imageIcon).toBe('🍲');
+    expect(kadhi.keyIngredients).toContain('red chilli');
+
+    const sandwich = vegList.find(r => r.id === 'sandwich')!;
+    expect(sandwich.imageIcon).toBe('🥪');
+
+    // For nonveg dietType: egg-curry should show with egg icon
+    const nonvegList = service.getAdditionalRecipes('nonveg', 'gain');
+    const eggCurry = nonvegList.find(r => r.id === 'egg-curry');
+    expect(eggCurry).toBeTruthy();
+    expect(eggCurry?.imageIcon).toBe('🍳');
+    expect(eggCurry?.dietType).toBe('nonveg');
+  });
 });
 

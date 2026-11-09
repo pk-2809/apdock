@@ -14,15 +14,23 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import https from 'node:https';
+import { execSync } from 'node:child_process';
 
 const DEFAULT_JSON_PATH = 'meals.json';
 
 function getAccessToken() {
+  const configPath = path.join(os.homedir(), '.config/configstore/firebase-tools.json');
   // 1. Try Firebase CLI configstore
   try {
-    const configPath = path.join(os.homedir(), '.config/configstore/firebase-tools.json');
     if (fs.existsSync(configPath)) {
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      let config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      const isExpired = !config.tokens?.expires_at || config.tokens.expires_at < Date.now() + 60000;
+      if (isExpired && config.tokens?.refresh_token) {
+        try {
+          execSync('npx -y firebase-tools projects:list', { stdio: 'ignore' });
+          config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        } catch {}
+      }
       if (config.tokens && config.tokens.access_token) {
         return config.tokens.access_token;
       }
@@ -78,25 +86,25 @@ async function main() {
       mealRole: { stringValue: meal.mealRole || 'main' },
       dietType: { stringValue: meal.dietType || 'vegetarian' },
       goals: {
-        arrayValue: {
-          values: (Array.isArray(meal.goals) ? meal.goals : []).map(g => ({ stringValue: String(g) }))
-        }
+        arrayValue: (Array.isArray(meal.goals) && meal.goals.length > 0)
+          ? { values: meal.goals.map(g => ({ stringValue: String(g) })) }
+          : {}
       },
       ingredients: {
-        arrayValue: {
-          values: (Array.isArray(meal.ingredients) ? meal.ingredients : []).map(i => ({ stringValue: String(i) }))
-        }
+        arrayValue: (Array.isArray(meal.ingredients) && meal.ingredients.length > 0)
+          ? { values: meal.ingredients.map(i => ({ stringValue: String(i) })) }
+          : {}
       },
       day: {
-        arrayValue: {
-          values: (Array.isArray(meal.day) ? meal.day : []).map(d => ({ stringValue: String(d) }))
-        }
+        arrayValue: (Array.isArray(meal.day) && meal.day.length > 0)
+          ? { values: meal.day.map(d => ({ stringValue: String(d) })) }
+          : {}
       }
     };
 
     const body = JSON.stringify({ fields });
 
-    const status = await new Promise((resolve, reject) => {
+    const result = await new Promise((resolve, reject) => {
       const req = https.request({
         hostname: 'firestore.googleapis.com',
         path: `/v1/projects/apdock/databases/(default)/documents/meals/${encodeURIComponent(meal.id)}`,
@@ -109,18 +117,18 @@ async function main() {
       }, res => {
         let respData = '';
         res.on('data', chunk => respData += chunk);
-        res.on('end', () => resolve(res.statusCode));
+        res.on('end', () => resolve({ status: res.statusCode, data: respData }));
       });
       req.on('error', reject);
       req.write(body);
       req.end();
     });
 
-    if (status === 200) {
+    if (result.status === 200) {
       successCount++;
       process.stdout.write(`✔ [${successCount}/${mealsData.length}] /meals/${meal.id}\n`);
     } else {
-      console.error(`❌ Failed to upsert ${meal.id}, HTTP status: ${status}`);
+      console.error(`❌ Failed to upsert ${meal.id}, HTTP status: ${result.status}, response: ${result.data}`);
     }
   }
 

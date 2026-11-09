@@ -825,12 +825,20 @@ export class DietService {
     const removedSet = new Set(this.removedAdditionalRecipeIds());
     const editedMap = this.editedAdditionalRecipes();
 
-    // 1. Gather alternate meals from Firestore (category="alternate", "alternatives", "additional", "extra")
+    // 1. Gather alternate meals from Firestore (category="alternate", "alternatives", "additional", "additional_recipe", "extra")
     const firestoreAlternates: AdditionalRecipe[] = this.firestoreService
       .meals()
       .filter(m => {
         const cat = (m.category || '').toLowerCase().trim();
-        const isAlt = cat === 'alternate' || cat === 'alternatives' || cat === 'additional' || cat === 'extra';
+        const isAlt =
+          cat === 'alternate' ||
+          cat === 'alternatives' ||
+          cat === 'additional' ||
+          cat === 'additional_recipe' ||
+          cat === 'additional_recipes' ||
+          cat === 'extra' ||
+          cat.startsWith('additional') ||
+          cat.startsWith('alternate');
         if (!isAlt) return false;
 
         const rawGoals: unknown = m.goals;
@@ -863,18 +871,43 @@ export class DietService {
 
         return true;
       })
-      .map(m => ({
-        id: m.id,
-        title: m.name,
-        category: 'High Protein' as const,
-        calories: m.calories ?? 250,
-        protein: m.protein ?? 15,
-        prepTime: m.prepTimeMinutes ? `${m.prepTimeMinutes} mins` : '10 mins',
-        dietType: this.normalizeDietType(m.dietType),
-        imageIcon: m.mealRole === 'beverage' ? '☕' : '🥗',
-        description: m.description || `Fresh recipe with ${(m.ingredients || []).slice(0, 3).join(', ')}.`,
-        keyIngredients: m.ingredients || []
-      }));
+      .map(m => {
+        const lowerId = (m.id || '').toLowerCase();
+        const lowerName = (m.name || '').toLowerCase();
+        let icon = '🥗';
+        if (m.mealRole === 'beverage' || lowerId.includes('tea') || lowerId.includes('coffee') || lowerId.includes('milk')) {
+          icon = '☕';
+        } else if (lowerId.includes('sandwich') || lowerName.includes('sandwich')) {
+          icon = '🥪';
+        } else if (lowerId.includes('egg') || lowerName.includes('egg')) {
+          icon = '🍳';
+        } else if (
+          lowerId.includes('dal') ||
+          lowerName.includes('dal') ||
+          lowerId.includes('kadhi') ||
+          lowerName.includes('kadhi') ||
+          lowerId.includes('curry') ||
+          lowerName.includes('curry')
+        ) {
+          icon = '🍲';
+        }
+
+        const ingredientsClean = (m.ingredients || []).map(i => i.replace(/_/g, ' '));
+        return {
+          id: m.id,
+          title: m.name,
+          category: 'High Protein' as const,
+          calories: m.calories ?? 250,
+          protein: m.protein ?? 15,
+          prepTime: m.prepTimeMinutes ? `${m.prepTimeMinutes} mins` : '10 mins',
+          dietType: this.normalizeDietType(m.dietType),
+          imageIcon: icon,
+          description:
+            m.description ||
+            `Fresh recipe with ${ingredientsClean.slice(0, 3).join(', ')}.`,
+          keyIngredients: ingredientsClean
+        };
+      });
 
     const combined = [...this.customRecipes(), ...firestoreAlternates, ...ADDITIONAL_RECIPES];
 

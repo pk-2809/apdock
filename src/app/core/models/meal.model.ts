@@ -16,16 +16,16 @@
  *   "day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
  * }
  *
- * "category" can be "breakfast", "lunch", "dinner", or "alternate".
- * Meals with category="alternate" appear directly in the alternatives / additional recipes section.
+ * "category" can be "breakfast", "lunch", "dinner", "alternate", or "additional_recipe".
+ * Meals with category="alternate" or "additional_recipe" appear directly in the alternatives / additional recipes section.
  */
 
 export interface MealDocument {
   id: string;
   name: string;
-  category: 'breakfast' | 'lunch' | 'dinner' | 'alternate' | string;
-  mealRole?: 'beverage' | 'main' | 'side' | 'snack' | string;
-  dietType: 'vegetarian' | 'non-vegetarian' | 'veg' | 'nonveg' | 'both' | string;
+  category: 'breakfast' | 'lunch' | 'dinner' | 'alternate' | 'additional_recipe' | string;
+  mealRole?: 'beverage' | 'main' | 'side' | 'snack' | 'component' | string;
+  dietType: 'vegetarian' | 'non_vegetarian' | 'non-vegetarian' | 'veg' | 'nonveg' | 'both' | string;
   goals: string[];
   ingredients: string[];
   day: string[];
